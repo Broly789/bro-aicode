@@ -1,0 +1,19 @@
+{
+  "name": "brocode",
+  "private": true,
+  "packageManager": "bun",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "bun run --filter @brocode/server dev",
+    "dev:cli": "bun run --cwd \"$PWD/apps/cli\" dev",
+    "dev": "bun run dev:server & bun run dev:cli",
+    "build:cli": "bun run --cwd \"$PWD/apps/cli\" build",
+    "build": "bun run build:cli"
+  },
+  "dependencies": {
+    "@types/node": "^26.0.1"
+  }
+}
