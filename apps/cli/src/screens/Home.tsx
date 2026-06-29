@@ -14,7 +14,7 @@ export function Home() {
     >
       <AsciiArt font="slick" color="#00FFFF" />
       <box style={{ width: '100%', height: 1 }} />
-      <TextArea onSubmit={() => navigate('/ai-chat')} />
+      <TextArea onSubmit={(value) => navigate('/ai-chat', { state: { prompt: value } })} />
     </box>
   )
 }

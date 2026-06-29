@@ -1,5 +1,11 @@
 import { greet, PROJECT_NAME } from '@brocode/shared'
-import { createTextStreamResponse, streamText, toTextStream } from 'ai'
+import {
+  convertToModelMessages,
+  createTextStreamResponse,
+  streamText,
+  toTextStream,
+  type UIMessage,
+} from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 import { Hono } from 'hono'
 
@@ -13,6 +19,19 @@ const route = app
     const result = streamText({
       model: deepseek('deepseek-chat'),
       prompt: prompt ?? 'say hello world',
+    })
+    return createTextStreamResponse({
+      stream: toTextStream({ stream: result.stream }),
+    })
+  })
+  .post('/api/chat', async (c) => {
+    const { messages } = await c.req.json<{ messages: UIMessage[] }>()
+    const modelMessages = await convertToModelMessages(
+      (messages ?? []).map(({ id, ...message }) => message),
+    )
+    const result = streamText({
+      model: deepseek('deepseek-chat'),
+      messages: modelMessages,
     })
     return createTextStreamResponse({
       stream: toTextStream({ stream: result.stream }),
