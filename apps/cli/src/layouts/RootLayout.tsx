@@ -7,6 +7,7 @@ const navItems = [
   { key: '2', path: '/chat', label: 'Chat' },
   { key: '3', path: '/about', label: 'About' },
   { key: '4', path: '/settings', label: 'Settings' },
+  { key: '5', path: '/llm', label: 'LLM' },
 ] as const
 
 export function RootLayout() {
@@ -19,6 +20,7 @@ export function RootLayout() {
     if (event.name === '2') navigate('/chat')
     if (event.name === '3') navigate('/about')
     if (event.name === '4') navigate('/settings')
+    if (event.name === '5') navigate('/llm')
     if (event.name === 'q') renderer.destroy()
   })
 

@@ -1,5 +1,5 @@
 import { greet, PROJECT_NAME } from '@brocode/shared'
-import { generateText } from 'ai'
+import { createTextStreamResponse, streamText, toTextStream } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 import { Hono } from 'hono'
 
@@ -8,12 +8,15 @@ const app = new Hono()
 const route = app
   .get('/', (c) => c.text(greet(PROJECT_NAME)))
   .get('/health', (c) => c.json({ status: 'ok', runtime: 'bun' }))
-  .get('/api/llm', async (c) => {
-    const { text } = await generateText({
+  .post('/api/llm-test', async (c) => {
+    const { prompt } = await c.req.json()
+    const result = streamText({
       model: deepseek('deepseek-chat'),
-      prompt: c.req.query('prompt') ?? 'say hello world',
+      prompt: prompt ?? 'say hello world',
     })
-    return c.text(text)
+    return createTextStreamResponse({
+      stream: toTextStream({ stream: result.stream }),
+    })
   })
 
 export default app
