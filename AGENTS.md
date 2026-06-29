@@ -83,3 +83,48 @@ import { TextAttributes, type KeyEvent } from '@opentui/core'
 import { useKeyboard, useRenderer } from '@opentui/react'
 import { createMemoryRouter, RouterProvider, Outlet, useNavigate, useLocation } from 'react-router'
 ```
+
+## Server RPC (Hono Client)
+
+`@brocode/server` exports a typed `AppType` via Hono's RPC mechanism. Routes **must be chained** in the server for type inference to work (`app.get(...).get(...)`).
+
+### Client setup
+
+```ts
+// apps/cli/src/lib/client.ts
+import { hc } from "hono/client"
+import type { AppType } from "@brocode/server"
+
+const serverUrl = process.env.SERVER_URL ?? "http://localhost:3000"
+export const client = hc<AppType>(serverUrl)
+```
+
+### Usage
+
+Import the typed client from any screen or component:
+
+```ts
+import { client } from "../lib/client"
+
+// GET / — typed response
+const res = await client.index.$get()
+const text = await res.text()
+
+// GET /api/health — typed response
+const res = await client.api.health.$get()
+const data = await res.json()
+// data.status is typed as string
+```
+
+### Adding a new typed endpoint
+
+1. Add a chained route in `apps/server/src/index.ts`
+2. `AppType` updates automatically — no manual type sync
+3. The client in `apps/cli/src/lib/client.ts` picks up the new endpoint with full type inference
+
+### Key imports
+
+```ts
+import { hc, type InferRequestType, type InferResponseType } from "hono/client"
+import type { AppType } from "@brocode/server"
+```

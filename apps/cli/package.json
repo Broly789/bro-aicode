@@ -10,7 +10,12 @@
     "@brocode/shared": "workspace:*",
     "@opentui/core": "^0",
     "@opentui/react": "^0",
+    "hono": "^4",
     "react": "^19",
     "react-router": "^8.0.1"
+  },
+  "devDependencies": {
+    "@brocode/server": "workspace:*",
+    "@types/react": "^19.2.17"
   }
 }
