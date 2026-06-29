@@ -1,7 +1,10 @@
+import { useNavigate } from 'react-router'
 import { AsciiArt } from '../components/AsciiArt'
 import { TextArea } from '../components/TextArea'
 
 export function Home() {
+  const navigate = useNavigate()
+
   return (
     <box
       flexDirection="column"
@@ -11,7 +14,7 @@ export function Home() {
     >
       <AsciiArt font="slick" color="#00FFFF" />
       <box style={{ width: '100%', height: 1 }} />
-      <TextArea />
+      <TextArea onSubmit={() => navigate('/ai-chat')} />
     </box>
   )
 }

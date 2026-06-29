@@ -5,6 +5,7 @@ import { Chat } from './screens/Chat'
 import { About } from './screens/About'
 import { Settings } from './screens/Settings'
 import { Llm } from './screens/Llm'
+import { AiChat } from './screens/AiChat'
 import { NotFound } from './screens/NotFound'
 
 export const router = createMemoryRouter([
@@ -17,6 +18,7 @@ export const router = createMemoryRouter([
       { path: 'about', element: <About /> },
       { path: 'settings', element: <Settings /> },
       { path: 'llm', element: <Llm /> },
+      { path: 'ai-chat', element: <AiChat /> },
       { path: '*', element: <NotFound /> },
     ],
   },
