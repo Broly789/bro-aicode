@@ -10,6 +10,7 @@
     "@brocode/shared": "workspace:*",
     "@opentui/core": "^0",
     "@opentui/react": "^0",
-    "react": "^19"
+    "react": "^19",
+    "react-router": "^8.0.1"
   }
 }

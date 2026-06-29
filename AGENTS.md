@@ -49,3 +49,37 @@ Root `package.json` uses **two different patterns** for invoking workspace scrip
 | `dev:server` | `--filter @brocode/server` | `bun run --filter @brocode/server dev` |
 
 **Why?** OpenTUI is a full-screen TUI framework that requires raw terminal mode. `bun run --filter` wraps the process in a way that can interfere with terminal raw mode / stdin handling. `--cwd` runs the command directly in the package directory, preserving proper TTY attachment for TUI rendering. For Hono (HTTP server), `--filter` works fine since it doesn't need terminal interaction. If migrating CLI to `--filter`, verify that terminal mode isn't broken. The `dev` script's `&` concurrent runner depends on script name strings, not flags.
+
+## CLI Routing
+
+`@brocode/cli` uses `react-router` v8 with `createMemoryRouter` (no browser URL since this is a TUI).
+
+### Route structure
+
+Routes are defined in `apps/cli/src/router.tsx` as a single `createMemoryRouter` call. All routes are children of `RootLayout` which provides header/footer chrome and keyboard navigation.
+
+| Key | Path | Component | Description |
+|-----|------|-----------|-------------|
+| `1` | `/` | `screens/Home` | Main screen — AsciiArt + TextArea |
+| `2` | `/chat` | `screens/Chat` | Chat/messages screen |
+| `3` | `/about` | `screens/About` | Project info |
+| `4` | `/settings` | `screens/Settings` | Configuration |
+| `*` | — | `screens/NotFound` | Catch-all 404 |
+
+### Adding a new screen
+
+1. Create `src/screens/Foo.tsx` exporting a default component
+2. Add route to `src/router.tsx` under the root route's `children` array
+3. Add keyboard shortcut in `src/layouts/RootLayout.tsx` (both `useKeyboard` handler and `navItems` array)
+
+### Keeping screens minimal
+
+Screens should be presentational — no data-fetching, no routing logic. The `RootLayout` owns all keyboard navigation and chrome. Screens receive no props and render directly into `<Outlet />`.
+
+### Key imports
+
+```ts
+import { TextAttributes, type KeyEvent } from '@opentui/core'
+import { useKeyboard, useRenderer } from '@opentui/react'
+import { createMemoryRouter, RouterProvider, Outlet, useNavigate, useLocation } from 'react-router'
+```
