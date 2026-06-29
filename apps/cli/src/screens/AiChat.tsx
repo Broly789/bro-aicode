@@ -5,8 +5,13 @@ import { useLocation, useNavigate } from 'react-router'
 import { useChat } from '@ai-sdk/react'
 import { TextStreamChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
+import { z } from 'zod'
 
 const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
+
+const ChatRouteState = z.object({
+  prompt: z.string().default(''),
+})
 
 function textFromParts(msg: UIMessage): string {
   return msg.parts
@@ -21,7 +26,7 @@ export function AiChat() {
   const sentRef = useRef(false)
   const inputRef = useRef<InputRenderable>(null)
 
-  const initialPrompt = (location.state as { prompt?: string })?.prompt
+  const { prompt: initialPrompt } = ChatRouteState.parse(location.state ?? {})
 
   const { messages, sendMessage, status, error } = useChat({
     transport: new TextStreamChatTransport({
@@ -90,7 +95,7 @@ export function AiChat() {
         )}
       </scrollbox>
 
-      {/* Status / error */}
+      {/* 流式状态 / 错误提示 */}
       <box height={1} paddingLeft={1}>
         {status === 'streaming' ? (
           <text attributes={TextAttributes.DIM}>...</text>
@@ -101,10 +106,10 @@ export function AiChat() {
         ) : null}
       </box>
 
-      {/* Separator */}
+      {/* 分割线 */}
       <box borderStyle="single" border={['top']} borderColor="#222" height={1} />
 
-      {/* Input */}
+      {/* 输入区域 */}
       <box flexDirection="row" paddingLeft={1} paddingRight={1}>
         <text fg="#7ec8e3">&gt; </text>
         <input

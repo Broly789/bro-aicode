@@ -76,6 +76,32 @@ Routes are defined in `apps/cli/src/router.tsx` as a single `createMemoryRouter`
 
 Screens should be presentational — no data-fetching, no routing logic. The `RootLayout` owns all keyboard navigation and chrome. Screens receive no props and render directly into `<Outlet />`.
 
+### Reading location.state
+
+Always parse `location.state` with a zod schema instead of inline casts or explicit types:
+
+```ts
+const RouteState = z.object({
+  prompt: z.string().default(''),
+})
+
+const { prompt } = RouteState.parse(location.state ?? {})
+```
+
+This applies to **all apps** (CLI and server alike). Using zod gives you:
+- **Single source of truth** for the shape — no type/interface to maintain separately
+- **Defaults in the schema** via `.default()` — no `?? ''` scattered in the component
+- **Runtime validation** — catches unexpected `null`/`undefined`/wrong types early
+- **Zod v4** syntax used throughout — `z.object({ ... }).parse(...)` with `.default()` for optional fields
+
+Do NOT use inline casts or separate interface types:
+
+```ts
+// ❌ Avoid
+const value = (location.state as { prompt?: string })?.prompt ?? ''
+type ChatRouteState = { prompt?: string }
+```
+
 ### Key imports
 
 ```ts
