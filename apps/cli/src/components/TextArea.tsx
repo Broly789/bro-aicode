@@ -5,15 +5,17 @@ export function TextArea() {
 
   return (
     <box
-      borderStyle="rounded"
-      borderColor="#00FFFF"
+      flexShrink={0}
       width="100%"
+      backgroundColor="#0d1117"
+      borderStyle="rounded"
+      borderColor="#30363d"
     >
       <textarea
         placeholder="Ask anything..."
         onInput={setValue}
         width="100%"
-        height={6}
+        height={8}
         backgroundColor="#0d1117"
         focusedBackgroundColor="#161b22"
         textColor="#e6edf3"
