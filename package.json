@@ -14,6 +14,8 @@
     "build": "bun run build:cli"
   },
   "dependencies": {
-    "@types/node": "^26.0.1"
+    "@ai-sdk/deepseek": "^3.0.1",
+    "@types/node": "^26.0.1",
+    "ai": "^7.0.4"
   }
 }
