@@ -148,6 +148,24 @@ const data = await res.json()
 2. `AppType` updates automatically — no manual type sync
 3. The client in `apps/cli/src/lib/client.ts` picks up the new endpoint with full type inference
 
+### Using RPC URL with `useChat`
+
+When integrating `@ai-sdk/react`'s `useChat` with a Hono RPC endpoint, use `$url()` to get the typed URL instead of hardcoding a string:
+
+```ts
+import { client } from "../lib/client"
+import { useChat } from "@ai-sdk/react"
+import { TextStreamChatTransport } from "ai"
+
+const { messages, sendMessage, status, error } = useChat({
+  transport: new TextStreamChatTransport({
+    api: client.api.chat.$url().toString(),
+  }),
+})
+```
+
+The `$url()` method returns a typed URL derived from the Hono route definition. This keeps the API URL in sync with the server's route structure — if the path changes on the server, the client URL updates automatically via `AppType`.
+
 ### Key imports
 
 ```ts

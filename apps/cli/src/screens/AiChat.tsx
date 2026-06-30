@@ -6,8 +6,7 @@ import { useChat } from '@ai-sdk/react'
 import { TextStreamChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
 import { z } from 'zod'
-
-const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
+import { client } from '../lib/client'
 
 const ChatRouteState = z.object({
   prompt: z.string().default(''),
@@ -30,7 +29,7 @@ export function AiChat() {
 
   const { messages, sendMessage, status, error } = useChat({
     transport: new TextStreamChatTransport({
-      api: `${serverUrl}/api/chat`,
+      api: client.api.chat.$url().toString(),
     }),
   })
 
@@ -95,13 +94,15 @@ export function AiChat() {
         )}
       </scrollbox>
 
-      {/* 流式状态 / 错误提示 */}
+      {/* 状态提示 */}
       <box height={1} paddingLeft={1}>
-        {status === 'streaming' ? (
+        {status === 'submitted' ? (
+          <text attributes={TextAttributes.DIM}>Sending...</text>
+        ) : status === 'streaming' ? (
           <text attributes={TextAttributes.DIM}>...</text>
-        ) : error ? (
+        ) : status === 'error' ? (
           <text fg="red" attributes={TextAttributes.DIM}>
-            {error.message}
+            Failed: {error?.message ?? 'Unknown error'}
           </text>
         ) : null}
       </box>
