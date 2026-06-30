@@ -1,12 +1,13 @@
-import { TextAttributes, type InputRenderable, type KeyEvent } from '@opentui/core'
+import { TextAttributes, type KeyEvent } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useChat } from '@ai-sdk/react'
-import { TextStreamChatTransport } from 'ai'
+import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
+import { TextArea } from '../components/TextArea'
 
 const ChatRouteState = z.object({
   prompt: z.string().default(''),
@@ -23,12 +24,11 @@ export function AiChat() {
   const location = useLocation()
   const navigate = useNavigate()
   const sentRef = useRef(false)
-  const inputRef = useRef<InputRenderable>(null)
 
   const { prompt: initialPrompt } = ChatRouteState.parse(location.state ?? {})
 
   const { messages, sendMessage, status, error } = useChat({
-    transport: new TextStreamChatTransport({
+    transport: new DefaultChatTransport({
       api: client.api.chat.$url().toString(),
     }),
   })
@@ -54,15 +54,15 @@ export function AiChat() {
     }
   }, [initialPrompt, sendMessage])
 
-  const handleSubmit = useCallback(() => {
-    if (isLoading) return
-    const el = inputRef.current
-    if (!el) return
-    const text = el.value.trim()
-    if (!text) return
-    sendMessage({ text })
-    el.value = ''
-  }, [isLoading, sendMessage])
+  const handleSubmit = useCallback(
+    (value: string) => {
+      if (isLoading) return
+      const text = value.trim()
+      if (!text) return
+      sendMessage({ text })
+    },
+    [isLoading, sendMessage],
+  )
 
   return (
     <box flexDirection="column" flexGrow={1}>
@@ -111,19 +111,7 @@ export function AiChat() {
       <box borderStyle="single" border={['top']} borderColor="#222" height={1} />
 
       {/* 输入区域 */}
-      <box flexDirection="row" paddingLeft={1} paddingRight={1}>
-        <text fg="#7ec8e3">&gt; </text>
-        <input
-          ref={inputRef}
-          placeholder="Ask anything..."
-          onSubmit={handleSubmit}
-          focused={!isLoading}
-          width="100%"
-          textColor="#e6edf3"
-          placeholderColor="#484f58"
-          cursorColor="#00FFFF"
-        />
-      </box>
+      <TextArea onSubmit={handleSubmit} disabled={isLoading} />
     </box>
   )
 }

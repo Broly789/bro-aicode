@@ -155,10 +155,10 @@ When integrating `@ai-sdk/react`'s `useChat` with a Hono RPC endpoint, use `$url
 ```ts
 import { client } from "../lib/client"
 import { useChat } from "@ai-sdk/react"
-import { TextStreamChatTransport } from "ai"
+import { DefaultChatTransport } from "ai"
 
 const { messages, sendMessage, status, error } = useChat({
-  transport: new TextStreamChatTransport({
+  transport: new DefaultChatTransport({
     api: client.api.chat.$url().toString(),
   }),
 })

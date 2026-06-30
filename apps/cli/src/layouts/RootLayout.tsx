@@ -4,7 +4,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 
 const navItems = [
   { key: '1', path: '/', label: 'Home' },
-  { key: '2', path: '/chat', label: 'Chat' },
+  // { key: '2', path: '/chat', label: 'Chat' },
   { key: '3', path: '/about', label: 'About' },
   { key: '4', path: '/settings', label: 'Settings' },
   { key: '5', path: '/llm', label: 'LLM' },
@@ -17,13 +17,13 @@ export function RootLayout() {
   const location = useLocation()
 
   useKeyboard((event: KeyEvent) => {
-    if (event.name === '1') navigate('/')
-    if (event.name === '2') navigate('/chat')
-    if (event.name === '3') navigate('/about')
-    if (event.name === '4') navigate('/settings')
-    if (event.name === '5') navigate('/llm')
-    if (event.name === '6') navigate('/ai-chat')
-    if (event.name === 'q') renderer.destroy()
+    if (event.name === '1' && event.shift) navigate('/')
+    // if (event.name === '2' && event.shift) navigate('/chat')
+    if (event.name === '3' && event.shift) navigate('/about')
+    if (event.name === '4' && event.shift) navigate('/settings')
+    if (event.name === '5' && event.shift) navigate('/llm')
+    if (event.name === '6' && event.shift) navigate('/ai-chat')
+    if (event.name === 'q' && event.shift) renderer.destroy()
   })
 
   return (
@@ -37,9 +37,7 @@ export function RootLayout() {
         border={['bottom']}
       >
         <text attributes={TextAttributes.BOLD}>Brocode</text>
-        <text attributes={TextAttributes.DIM}>
-          {location.pathname}
-        </text>
+        <text attributes={TextAttributes.DIM}>{location.pathname}</text>
       </box>
 
       <box flexGrow={1} padding={1}>
@@ -64,10 +62,10 @@ export function RootLayout() {
                 : TextAttributes.NONE
             }
           >
-            [{key}] {label}
+            [S+{key}] {label}
           </text>
         ))}
-        <text attributes={TextAttributes.DIM}>[q] Quit</text>
+        <text attributes={TextAttributes.DIM}>[S+q] Quit</text>
       </box>
     </box>
   )

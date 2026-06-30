@@ -52,7 +52,7 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
 Enter to submit | Shift+Enter new line"
         keyBindings={TEXTAREA_KEY_BINDINGS}
         width="100%"
-        height={8}
+        height={4}
         backgroundColor="#0d1117"
         focusedBackgroundColor="#161b22"
         textColor="#e6edf3"

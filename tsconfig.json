@@ -6,6 +6,7 @@
     "strict": true,
     "jsx": "react-jsx",
     "jsxImportSource": "@opentui/react",
+    "types": ["bun"],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
