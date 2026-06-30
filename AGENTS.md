@@ -1,6 +1,6 @@
 # Brocode
 
-Bun workspaces monorepo (`apps/*`). Two packages under `apps/`.
+Bun workspaces monorepo (`apps/*`, `packages/*`).
 
 ## Packages
 
@@ -8,28 +8,51 @@ Bun workspaces monorepo (`apps/*`). Two packages under `apps/`.
 |---------|------|-------|-----------|
 | `@brocode/cli` | `apps/cli` | `src/index.tsx` | OpenTUI (React) |
 | `@brocode/server` | `apps/server` | `src/index.ts` | Hono |
+| `@brocode/database` | `packages/database` | `src/index.ts` | Prisma (Postgres) |
 | `@brocode/shared` | `packages/shared` | `src/index.ts` | — |
 
 ## Workspace dependency setup
 
-To add `@brocode/shared` to an app, declare it in the app's `package.json`:
+To add a workspace package to an app, declare it in the app's `package.json`:
 
 ```json
 "dependencies": {
-  "@brocode/shared": "workspace:*"
+  "@brocode/database": "workspace:*"
 }
 ```
 
-Bun resolves `workspace:*` to the local `packages/shared` package via symlink. No `npm publish` needed — changes in `packages/shared` are instantly visible to consumers. Root `workspaces` must include `"packages/*"` for this to work.
+Bun resolves `workspace:*` to the local package via symlink. No `npm publish` needed. Root `workspaces` must include `"packages/*"` for this to work.
 
 ## Commands
 
 ```sh
-bun run dev          # runs both concurrently (&)
-bun run dev:cli      # bun --watch run apps/cli/src/index.tsx
-bun run dev:server   # bun run --hot apps/server/src/index.ts
-bun run build        # bun build apps/cli/src/index.tsx --target bun
+bun run dev            # runs server + cli concurrently (&)
+bun run dev:cli        # bun --watch run apps/cli/src/index.tsx
+bun run dev:server     # bun run --hot apps/server/src/index.ts
+bun run build          # bun build apps/cli/src/index.tsx --target bun
+bun run db:generate    # prisma generate (via proxy to packages/database)
+bun run db:push        # prisma db push
+bun run db:migrate     # prisma migrate dev
+bun run db:deploy      # prisma migrate deploy
+bun run db:studio      # prisma studio
 ```
+
+## Database
+
+Prisma schema lives in `packages/database/prisma/schema.prisma`. Generated client outputs to `packages/database/generated/` and is re-exported via `packages/database/src/index.ts`.
+
+**Consumers:**
+- `@brocode/server` — instantiates PrismaClient with `@prisma/adapter-pg` for runtime queries
+- `@brocode/cli` — imports only the generated types (`Session`, `Message`, etc.)
+
+**Singleton pattern** in `apps/server/src/lib/db.ts` uses globalThis caching to survive Bun `--hot` reloads without exhausting connection pools.
+
+**Chat persistence flow:**
+1. Client sends `POST /api/chat` with `{ sessionId, messages }`
+2. Server saves incoming user messages to DB
+3. `streamText` streams the AI response
+4. `onFinish` callback saves assistant messages (text + reasoning + tool calls/results) to DB
+5. Messages store `parts` as JSON (`UIMessagePart[]`) — source of truth for the conversation
 
 ## Quirks
 

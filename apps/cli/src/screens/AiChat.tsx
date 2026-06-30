@@ -1,9 +1,9 @@
 import { type KeyEvent } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { DefaultChatTransport, generateId } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
 import { ChatShell } from '../components/chat/ChatShell'
@@ -19,9 +19,12 @@ export function AiChat() {
 
   const { prompt: initialPrompt } = ChatRouteState.parse(location.state ?? {})
 
+  const sessionId = useMemo(() => generateId(), [])
+
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({
       api: client.api.chat.$url().toString(),
+      body: { sessionId },
     }),
   })
 

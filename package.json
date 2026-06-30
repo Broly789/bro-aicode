@@ -11,7 +11,13 @@
     "dev:cli": "bun run --cwd \"$PWD/apps/cli\" dev",
     "dev": "bun run dev:server & bun run dev:cli",
     "build:cli": "bun run --cwd \"$PWD/apps/cli\" build",
-    "build": "bun run build:cli"
+    "build": "bun run build:cli",
+    "db:generate": "bun run --cwd \"$PWD/packages/database\" db:generate",
+    "db:push": "bun run --cwd \"$PWD/packages/database\" db:push",
+    "db:migrate": "bun run --cwd \"$PWD/packages/database\" db:migrate",
+    "db:deploy": "bun run --cwd \"$PWD/packages/database\" db:deploy",
+    "db:studio": "bun run --cwd \"$PWD/packages/database\" db:studio",
+    "db:validate": "bun run --cwd \"$PWD/packages/database\" db:validate"
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^3.0.1",

@@ -3,4 +3,7 @@ dist/
 .env
 bun.lock
 *.tsbuildinfo
-.env.*
+.env.local
+.env.production
+generated/
+*.generated.*

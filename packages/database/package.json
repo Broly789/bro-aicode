@@ -1,0 +1,22 @@
+{
+  "name": "@brocode/database",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "bunx --bun prisma generate",
+    "db:push": "bunx --bun prisma db push",
+    "db:migrate": "bunx --bun prisma migrate dev",
+    "db:deploy": "bunx --bun prisma migrate deploy",
+    "db:studio": "bunx --bun prisma studio",
+    "db:validate": "bunx --bun prisma validate"
+  },
+  "dependencies": {
+    "@prisma/client": "^7"
+  },
+  "devDependencies": {
+    "prisma": "^7"
+  }
+}

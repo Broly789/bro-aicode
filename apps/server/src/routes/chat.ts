@@ -8,11 +8,16 @@ import {
   toUIMessageStream,
   tool,
   validateUIMessages,
+  generateId,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 import { validateJson } from '../lib/validate'
+import { prisma } from '../lib/db'
+
+const MODEL = 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
+  sessionId: z.string().optional().default(() => generateId()),
   messages: z.array(z.unknown()),
 })
 
@@ -71,26 +76,117 @@ export const chatRoute = new Hono().post(
   '/chat',
   validateJson(chatBodySchema),
   async (c) => {
-    const { messages } = c.req.valid('json')
+    const { messages, sessionId } = c.req.valid('json')
     const validatedMessages = await validateUIMessages({
       messages: messages ?? [],
     })
+
+    await prisma.$transaction(async (tx) => {
+      await tx.session.upsert({
+        where: { id: sessionId },
+        create: { id: sessionId },
+        update: {},
+      })
+
+      for (const msg of validatedMessages) {
+        await tx.message.upsert({
+          where: { id: msg.id },
+          create: {
+            id: msg.id,
+            sessionId,
+            role: msg.role,
+            content: msg.parts
+              .filter((p) => 'text' in p)
+              .map((p) => (p as { text: string }).text)
+              .join('\n'),
+            parts: msg.parts as object,
+          },
+          update: {},
+        })
+      }
+    }).catch(() => {})
+
     const modelMessages = await convertToModelMessages(
       validatedMessages.map(({ id, ...message }) => message),
     )
+
     const result = streamText({
-      model: deepseek('deepseek-v4-flash'),
+      model: deepseek(MODEL),
       messages: modelMessages,
       tools,
       stopWhen: isStepCount(5),
       providerOptions: {
         deepseek: {
-          thinking: { type: 'enabled' }, //开启「思考模式」（Thinking Mode）
+          thinking: { type: 'enabled' },
         },
       },
+      onFinish: async ({ text, toolCalls, toolResults, finalStep }) => {
+        const parts: Array<object> = []
+        const reasoningText = finalStep.reasoningText
+
+        if (reasoningText) {
+          parts.push({ type: 'reasoning', text: reasoningText, state: 'done' })
+        }
+
+        if (text) {
+          parts.push({ type: 'text', text, state: 'done' })
+        }
+
+        for (const tc of toolCalls) {
+          const tr = toolResults.find((r) => r.toolCallId === tc.toolCallId)
+          const part: Record<string, unknown> = {
+            type: `tool-${tc.toolName}`,
+            toolCallId: tc.toolCallId,
+            state: 'output-available',
+            input: tc.input,
+          }
+          if (tr) part.output = tr.output
+          parts.push(part)
+        }
+
+        try {
+          const msgId = generateId()
+          await prisma.message.upsert({
+            where: { id: msgId },
+            create: {
+              id: msgId,
+              sessionId,
+              role: 'assistant',
+              content: text,
+              parts,
+              model: MODEL,
+            },
+            update: {
+              content: text,
+              parts,
+              model: MODEL,
+            },
+          })
+
+          await prisma.session.update({
+            where: { id: sessionId },
+            data: {},
+          })
+        } catch (err) {
+          console.error('Failed to persist assistant message:', err)
+        }
+      },
+      onError: (err) => {
+        console.error('Stream error:', err)
+      },
     })
+
+    const stream = toUIMessageStream({
+      stream: result.stream,
+      sendReasoning: true,
+      originalMessages: validatedMessages,
+    })
+
     return createUIMessageStreamResponse({
-      stream: toUIMessageStream({ stream: result.stream }),
+      stream,
+      headers: {
+        'x-session-id': sessionId,
+      },
     })
   },
 )
