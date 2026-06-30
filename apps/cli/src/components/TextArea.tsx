@@ -35,7 +35,7 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
   }, [handleSubmit])
 
   return (
-    <box flexShrink={0} width="100%">
+    <box flexShrink={0} width="100%" borderStyle="rounded" borderColor="#00FFFF">
       <textarea
         ref={textareaRef}
         placeholder="Ask anything... Enter to submit | Shift+Enter new line"
