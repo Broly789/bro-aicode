@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
+import { zValidator } from '@hono/zod-validator'
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
@@ -17,8 +18,11 @@ import { prisma } from '../lib/db'
 const MODEL = 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
-  sessionId: z.string().optional().default(() => generateId()),
   messages: z.array(z.unknown()),
+})
+
+const chatParamSchema = z.object({
+  sessionId: z.string(),
 })
 
 const weatherSchema = z.object({
@@ -73,21 +77,25 @@ const tools = {
 }
 
 export const chatRoute = new Hono().post(
-  '/chat',
+  '/:sessionId',
+  zValidator('param', chatParamSchema),
   validateJson(chatBodySchema),
   async (c) => {
-    const { messages, sessionId } = c.req.valid('json')
+    const { sessionId } = c.req.valid('param')
+    const { messages } = c.req.valid('json')
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+    })
+    if (!session) {
+      return c.json({ success: false, error: 'Session not found' }, 404)
+    }
+
     const validatedMessages = await validateUIMessages({
       messages: messages ?? [],
     })
 
     await prisma.$transaction(async (tx) => {
-      await tx.session.upsert({
-        where: { id: sessionId },
-        create: { id: sessionId },
-        update: {},
-      })
-
       for (const msg of validatedMessages) {
         await tx.message.upsert({
           where: { id: msg.id },
@@ -184,9 +192,6 @@ export const chatRoute = new Hono().post(
 
     return createUIMessageStreamResponse({
       stream,
-      headers: {
-        'x-session-id': sessionId,
-      },
     })
   },
 )

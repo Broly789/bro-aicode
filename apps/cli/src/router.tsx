@@ -18,7 +18,7 @@ export const router = createMemoryRouter([
       { path: 'about', element: <About /> },
       { path: 'settings', element: <Settings /> },
       { path: 'llm', element: <Llm /> },
-      { path: 'ai-chat', element: <AiChat /> },
+      { path: 'sessions/:id', element: <AiChat /> },
       { path: '*', element: <NotFound /> },
     ],
   },
