@@ -60,7 +60,7 @@ export function AiChat() {
   if (initialMessages === null) {
     return (
       <box alignItems="center" justifyContent="center" flexGrow={1}>
-        <text>Thinking...</text>
+        <text>Loading sessions...</text>
       </box>
     )
   }

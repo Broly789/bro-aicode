@@ -10,7 +10,12 @@ type ChatShellProps = {
   onSubmit: (value: string) => void
 }
 
-export function ChatShell({ messages, status, error, onSubmit }: ChatShellProps) {
+export function ChatShell({
+  messages,
+  status,
+  error,
+  onSubmit,
+}: ChatShellProps) {
   const isLoading = status === 'submitted' || status === 'streaming'
 
   return (
@@ -37,7 +42,7 @@ export function ChatShell({ messages, status, error, onSubmit }: ChatShellProps)
 
       <box height={1} paddingLeft={1}>
         {status === 'submitted' ? (
-          <text attributes={TextAttributes.DIM}>Sending...</text>
+          <text attributes={TextAttributes.DIM}>Thinking...</text>
         ) : status === 'streaming' ? (
           <text attributes={TextAttributes.DIM}>...</text>
         ) : status === 'error' ? (
@@ -47,7 +52,12 @@ export function ChatShell({ messages, status, error, onSubmit }: ChatShellProps)
         ) : null}
       </box>
 
-      <box borderStyle="single" border={['top']} borderColor="#222" height={1} />
+      <box
+        borderStyle="single"
+        border={['top']}
+        borderColor="#222"
+        height={1}
+      />
 
       <ChatTextArea onSubmit={onSubmit} disabled={isLoading} />
     </box>

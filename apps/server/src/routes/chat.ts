@@ -95,24 +95,23 @@ export const chatRoute = new Hono().post(
       messages: messages ?? [],
     })
 
-    await prisma.$transaction(async (tx) => {
-      for (const msg of validatedMessages) {
-        await tx.message.upsert({
-          where: { id: msg.id },
-          create: {
-            id: msg.id,
-            sessionId,
-            role: msg.role,
-            content: msg.parts
-              .filter((p) => 'text' in p)
-              .map((p) => (p as { text: string }).text)
-              .join('\n'),
-            parts: msg.parts as object,
-          },
-          update: {},
-        })
-      }
-    }).catch(() => {})
+    try {
+      await prisma.message.createMany({
+        data: validatedMessages.map((msg) => ({
+          id: msg.id,
+          sessionId,
+          role: msg.role,
+          content: msg.parts
+            .filter((p): p is { text: string } => 'text' in p)
+            .map((p) => p.text)
+            .join('\n'),
+          parts: msg.parts as object,
+        })),
+        skipDuplicates: true,
+      })
+    } catch (err) {
+      console.error('Failed to persist user messages:', err)
+    }
 
     const modelMessages = await convertToModelMessages(
       validatedMessages.map(({ id, ...message }) => message),
