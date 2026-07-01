@@ -2,8 +2,8 @@ import { type KeyEvent } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { replace, useLocation, useNavigate, useParams } from 'react-router'
-import { useChat, type Message } from '@ai-sdk/react'
-import { DefaultChatTransport } from 'ai'
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport, type UIMessage } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
 import { ChatShell } from '../components/chat/ChatShell'
@@ -16,7 +16,9 @@ export function AiChat() {
   const { id: sessionId } = useParams<{ id: string }>()
   const location = useLocation()
   const navigate = useNavigate()
-  const [initialMessages, setInitialMessages] = useState<Message[] | null>(null)
+  const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(
+    null,
+  )
 
   const { prompt } = ChatRouteState.parse(location.state ?? {})
 
@@ -36,12 +38,16 @@ export function AiChat() {
         setInitialMessages(
           data.messages.map((m) => ({
             id: m.id as string,
-            role: m.role as 'user' | 'assistant',
-            content: (m.content as string) ?? '',
-            parts: m.parts as Array<Record<string, unknown>>,
-            createdAt: m.createdAt
-              ? new Date(m.createdAt as string)
-              : undefined,
+            role: m.role as UIMessage['role'],
+            parts:
+              Array.isArray(m.parts) && m.parts.length > 0
+                ? (m.parts as UIMessage['parts'])
+                : [
+                    {
+                      type: 'text' as const,
+                      text: (m.content as string) ?? '',
+                    },
+                  ],
           })),
         )
       })
@@ -81,7 +87,7 @@ function AiChatInner({
   prompt,
 }: {
   sessionId: string
-  initialMessages: Message[]
+  initialMessages: UIMessage[]
   prompt: string
 }) {
   const navigate = useNavigate()
