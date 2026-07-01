@@ -1,11 +1,15 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
-import { join, basename, dirname } from 'node:path'
-import { grepSchema } from '@brocode/tools'
-import { resolveSafePath } from './guardrail'
+import { join } from 'node:path'
+import { grepSchema } from './schema'
+import { resolveSafePath } from '../guardrail'
 
 async function* walk(dir: string): AsyncGenerator<string> {
   let stats
-  try { stats = await stat(dir) } catch { return }
+  try {
+    stats = await stat(dir)
+  } catch {
+    return
+  }
   if (stats.isFile()) {
     yield dir
     return
@@ -13,7 +17,11 @@ async function* walk(dir: string): AsyncGenerator<string> {
   const entries = await readdir(dir, { withFileTypes: true })
   for (const entry of entries) {
     const fullPath = join(dir, entry.name)
-    if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+    if (
+      entry.isDirectory() &&
+      !entry.name.startsWith('.') &&
+      entry.name !== 'node_modules'
+    ) {
       yield* walk(fullPath)
     } else if (entry.isFile()) {
       yield fullPath
@@ -21,10 +29,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
   }
 }
 
-export async function grepExecute(
-  input: unknown,
-  cwd: string,
-) {
+export async function grepExecute(input: unknown, cwd: string) {
   const { pattern, path } = grepSchema.parse(input)
   const searchPath = path ? resolveSafePath(path, cwd) : cwd
   const regex = new RegExp(pattern)

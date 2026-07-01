@@ -1,11 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises'
-import { editFileSchema } from '@brocode/tools'
-import { resolveSafePath } from './guardrail'
+import { editFileSchema } from './schema'
+import { resolveSafePath } from '../guardrail'
 
-export async function editFileExecute(
-  input: unknown,
-  cwd: string,
-) {
+export async function editFileExecute(input: unknown, cwd: string) {
   const { path, oldText, newText } = editFileSchema.parse(input)
   const safePath = resolveSafePath(path, cwd)
   const content = await readFile(safePath, 'utf-8')
@@ -13,7 +10,7 @@ export async function editFileExecute(
   if (!content.includes(oldText)) {
     throw new Error(
       `Could not find the specified text in "${path}". ` +
-      'The file content may have changed. Read the file again and retry.',
+        'The file content may have changed. Read the file again and retry.',
     )
   }
 

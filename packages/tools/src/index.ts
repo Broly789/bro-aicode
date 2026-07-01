@@ -1,10 +1,10 @@
-import { readFileTool, readFileSchema } from './read-file'
-import { writeFileTool, writeFileSchema } from './write-file'
-import { editFileTool, editFileSchema } from './edit-file'
-import { listDirectoryTool, listDirectorySchema } from './list-directory'
-import { globTool, globSchema } from './glob'
-import { grepTool, grepSchema } from './grep'
-import { bashTool, bashSchema } from './bash'
+import { readFileTool, readFileSchema } from './read-file/schema'
+import { writeFileTool, writeFileSchema } from './write-file/schema'
+import { editFileTool, editFileSchema } from './edit-file/schema'
+import { listDirectoryTool, listDirectorySchema } from './list-directory/schema'
+import { globTool, globSchema } from './glob/schema'
+import { grepTool, grepSchema } from './grep/schema'
+import { bashTool, bashSchema } from './bash/schema'
 
 export const toolDefs = [
   readFileTool,

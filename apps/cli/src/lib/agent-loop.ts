@@ -1,8 +1,7 @@
 import type { UIMessage } from 'ai'
 import { getToolName, isToolUIPart } from 'ai'
 import type { DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
-import type { ToolResult } from '../tools/executor'
-import type { ToolCallPart } from '../tools/executor'
+import type { ToolResult, ToolCallPart } from '@brocode/tools/runtime'
 
 type AnyToolUIPart = ToolUIPart<UITools> | DynamicToolUIPart
 

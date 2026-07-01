@@ -1,11 +1,13 @@
-import { readFileExecute } from './read-file'
-import { writeFileExecute } from './write-file'
-import { editFileExecute } from './edit-file'
-import { listDirectoryExecute } from './list-directory'
-import { globExecute } from './glob'
-import { grepExecute } from './grep'
-import { bashExecute } from './bash'
-import type { ToolName } from '@brocode/tools'
+import { readFileExecute } from './read-file/execute'
+import { writeFileExecute } from './write-file/execute'
+import { editFileExecute } from './edit-file/execute'
+import { listDirectoryExecute } from './list-directory/execute'
+import { globExecute } from './glob/execute'
+import { grepExecute } from './grep/execute'
+import { bashExecute } from './bash/execute'
+import { toolDefs, type ToolName } from './index'
+export { GuardrailError, resolveSafePath } from './guardrail'
+export type { ToolName }
 
 export type ToolCallPart = {
   type: `tool-${string}` | 'dynamic-tool'
@@ -54,3 +56,20 @@ const confirmableTools = new Set<ToolName>(['writeFile', 'bash'])
 export function needsConfirmation(toolName: string): boolean {
   return confirmableTools.has(toolName as ToolName)
 }
+
+export {
+  readFileSchema,
+  readFileTool,
+  writeFileSchema,
+  writeFileTool,
+  editFileSchema,
+  editFileTool,
+  listDirectorySchema,
+  listDirectoryTool,
+  globSchema,
+  globTool,
+  grepSchema,
+  grepTool,
+  bashSchema,
+  bashTool,
+} from './index'

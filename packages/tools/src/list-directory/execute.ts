@@ -1,11 +1,8 @@
 import { readdir } from 'node:fs/promises'
-import { listDirectorySchema } from '@brocode/tools'
-import { resolveSafePath } from './guardrail'
+import { listDirectorySchema } from './schema'
+import { resolveSafePath } from '../guardrail'
 
-export async function listDirectoryExecute(
-  input: unknown,
-  cwd: string,
-) {
+export async function listDirectoryExecute(input: unknown, cwd: string) {
   const { path } = listDirectorySchema.parse(input)
   const safePath = resolveSafePath(path, cwd)
   const entries = await readdir(safePath, { withFileTypes: true })

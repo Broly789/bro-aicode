@@ -1,11 +1,8 @@
 import { Glob } from 'bun'
-import { globSchema } from '@brocode/tools'
-import { resolveSafePath } from './guardrail'
+import { globSchema } from './schema'
+import { resolveSafePath } from '../guardrail'
 
-export async function globExecute(
-  input: unknown,
-  cwd: string,
-) {
+export async function globExecute(input: unknown, cwd: string) {
   const { pattern, path } = globSchema.parse(input)
   const searchPath = path ? resolveSafePath(path, cwd) : cwd
   const glob = new Glob(pattern)

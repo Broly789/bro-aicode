@@ -1,10 +1,7 @@
-import { bashSchema } from '@brocode/tools'
-import { resolveSafePath } from './guardrail'
+import { bashSchema } from './schema'
+import { resolveSafePath } from '../guardrail'
 
-export async function bashExecute(
-  input: unknown,
-  cwd: string,
-) {
+export async function bashExecute(input: unknown, cwd: string) {
   const { command, timeout } = bashSchema.parse(input)
   const safeCwd = resolveSafePath('.', cwd)
   const proc = Bun.spawn(['bash', '-c', command], {
