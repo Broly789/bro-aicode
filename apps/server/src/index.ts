@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { chatRoute } from './routes/chat'
+import { llmTestRoute } from './routes/llm-test'
 import { sessionsRoute } from './routes/sessions'
 
 const app = new Hono()
@@ -11,6 +12,7 @@ app.onError((err, c) => {
 
 const route = app
   .route('/api/chat', chatRoute)
+  .route('/api/llm-test', llmTestRoute)
   .route('/api/sessions', sessionsRoute)
 
 const server = Bun.serve({

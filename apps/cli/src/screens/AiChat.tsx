@@ -87,12 +87,12 @@ function AiChatInner({
   const navigate = useNavigate()
   const sentRef = useRef(false)
 
-  const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
-
   const { messages, sendMessage, status, error } = useChat({
     messages: initialMessages,
     transport: new DefaultChatTransport({
-      api: `${serverUrl}/api/chat/${sessionId}`,
+      api: client.api.chat[':sessionId']
+        .$url({ param: { sessionId } })
+        .toString(),
     }),
     onError: (err) => {
       if (err.message?.includes('404')) {

@@ -1,13 +1,11 @@
 import { TextAttributes } from '@opentui/core'
 import { useCompletion } from '@ai-sdk/react'
 import { useEffect, useRef } from 'react'
-
-const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
+import { client } from '../lib/client'
 
 export function Llm() {
   const { completion, complete, isLoading, error } = useCompletion({
-    api: `${serverUrl}/api/llm-test`,
-    streamProtocol: 'text',
+    api: client.api['llm-test'].$url().toString(),
   })
   const triggered = useRef(false)
 

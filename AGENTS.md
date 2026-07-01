@@ -137,6 +137,19 @@ import { createMemoryRouter, RouterProvider, Outlet, useNavigate, useLocation } 
 
 `@brocode/server` exports a typed `AppType` via Hono's RPC mechanism. Routes **must be chained** in the server for type inference to work (`app.get(...).get(...)`).
 
+### Rule: all API requests must use Hono RPC
+
+Every API request in the codebase **must** go through the typed Hono client (`client.*`). Never construct URLs with string interpolation or `process.env.SERVER_URL`. If an endpoint doesn't exist on the server yet, add it first — do not fall back to a raw URL.
+
+```ts
+// ✅ Correct — typed, auto-synced with server
+const res = await client.api.sessions.$post({})
+const data = await client.api.sessions[':sessionId'].messages.$get({ param: { sessionId } })
+
+// ❌ Wrong — hardcoded URL, breaks on path changes
+const res = await fetch(`${serverUrl}/api/sessions`)
+```
+
 ### Client setup
 
 ```ts
@@ -155,35 +168,41 @@ Import the typed client from any screen or component:
 ```ts
 import { client } from "../lib/client"
 
-// GET / — typed response
-const res = await client.index.$get()
-const text = await res.text()
+// POST /api/sessions — typed response
+const res = await client.api.sessions.$post({})
+const { id } = await res.json()
 
-// GET /api/health — typed response
-const res = await client.api.health.$get()
+// GET /api/sessions/:sessionId/messages — typed with path param
+const res = await client.api.sessions[':sessionId'].messages.$get({ param: { sessionId } })
 const data = await res.json()
-// data.status is typed as string
 ```
 
 ### Adding a new typed endpoint
 
-1. Add a chained route in `apps/server/src/index.ts`
-2. `AppType` updates automatically — no manual type sync
-3. The client in `apps/cli/src/lib/client.ts` picks up the new endpoint with full type inference
+1. Create the route file in `apps/server/src/routes/`
+2. Import and chain it in `apps/server/src/index.ts`
+3. `AppType` updates automatically — no manual type sync
+4. The client in `apps/cli/src/lib/client.ts` picks up the new endpoint with full type inference
 
-### Using RPC URL with `useChat`
+### Using `$url()` with AI SDK hooks (`useChat`, `useCompletion`)
 
-When integrating `@ai-sdk/react`'s `useChat` with a Hono RPC endpoint, use `$url()` to get the typed URL instead of hardcoding a string:
+When passing an API URL to `useChat` or `useCompletion`, use `$url()` to get the typed URL instead of hardcoding a string. For routes with path parameters, pass the params to `$url()`:
 
 ```ts
 import { client } from "../lib/client"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport } from "ai"
 
+// With path params (e.g. /api/chat/:sessionId)
 const { messages, sendMessage, status, error } = useChat({
   transport: new DefaultChatTransport({
-    api: client.api.chat.$url().toString(),
+    api: client.api.chat[':sessionId'].$url({ param: { sessionId } }).toString(),
   }),
+})
+
+// Without path params (e.g. /api/llm-test)
+const { completion, complete } = useCompletion({
+  api: client.api['llm-test'].$url().toString(),
 })
 ```
 
