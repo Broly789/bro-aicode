@@ -62,6 +62,73 @@ Prisma schema lives in `packages/database/prisma/schema.prisma`. Generated clien
 - **Bun workspace hoisting**: each workspace has its own `node_modules/` with symlinks to the `.bun/` virtual store. Not traditional flat hoisting.
 - **No `bin` field** in `cli/package.json` yet — CLI isn't set up for direct execution (`#!/usr/bin/env bun` not present).
 
+## OpenTUI Tool Rendering Pitfalls
+
+Four common `TextNodeRenderable` / tool rendering bugs and their fixes:
+
+### 1. `<text>` inside `<text>` causes "TextNodeRenderable only accepts strings"
+
+**Error**: `TextNodeRenderable only accepts strings, TextNodeRenderable instances, or StyledText instances`
+
+**Cause**: OpenTUI React's `<text>` (backed by `TextRenderable`) only accepts strings, `<span>`/`<b>`/`<i>`/`<u>`/`<br>`/`<a>` (backed by `TextNodeRenderable` subclasses) as children. Nesting `<text>` inside `<text>` creates a `TextRenderable` child, which is rejected.
+
+**Fix**: Use `<span>` instead of nested `<text>`:
+```tsx
+// ❌ Wrong
+<text>
+  <text fg="green">Y</text>
+  <text>es</text>
+</text>
+
+// ✅ Correct
+<text>
+  <span fg="green">Y</span>
+  <span>es</span>
+</text>
+```
+
+### 2. ToolConfirm rendered in `height={1}` status bar
+
+**Cause**: `ToolConfirm` (a multi-line bordered box) was placed inside `<box height={1} paddingLeft={1}>` in `ChatShell`, making it invisible/deformed.
+
+**Fix**: Render `ToolConfirm` outside the status bar, between the scrollbox and status bar area.
+
+### 3. Tool executors use wrong working directory
+
+**Cause**: `bun run --cwd "$PWD/apps/cli"` changes the process CWD to `apps/cli/`. Tool executors used `process.cwd()` as the base directory, so `bash`, `readFile`, etc. operated relative to `apps/cli/` instead of the project root.
+
+**Fix**: Pass `PROJECT_ROOT=$PWD` in the script (`dev:cli`) and use `process.env.PROJECT_ROOT || process.cwd()` in `executor.ts`:
+```sh
+# package.json
+"dev:cli": "PROJECT_ROOT=$PWD bun run --cwd \"$PWD/apps/cli\" dev"
+```
+```ts
+// executor.ts
+const projectRoot = process.env.PROJECT_ROOT || process.cwd()
+```
+
+### 4. AI output with HTML tags strips formatting
+
+**Cause**: `stripHtml()` in `ChatMessage.tsx` used `s.replace(/<[^>]*>/g, '')` which removed all HTML tags without preserving formatting intent.
+
+**Fix**: Convert common HTML tags to markdown equivalents before stripping:
+```ts
+s.replace(/<h2>/gi, '## ').replace(/<\/h2>/gi, '')
+ .replace(/<b>/gi, '**').replace(/<\/b>/gi, '**')
+ // ... then strip remaining unknown tags
+```
+
+### 5. Confirmation Y/N key leaks into ChatTextArea
+
+**Cause**: During `confirming` state, `ChatTextArea` was only disabled when `status === 'streaming'`, so Y/N keypresses were captured by both `ToolConfirm` and the textarea.
+
+**Fix**: Also disable ChatTextArea during confirmation:
+```ts
+const isInputDisabled = status === 'streaming' || status === 'confirming'
+// ...
+<ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} />
+```
+
 ## Root scripts inconsistency
 
 Root `package.json` uses **two different patterns** for invoking workspace scripts:

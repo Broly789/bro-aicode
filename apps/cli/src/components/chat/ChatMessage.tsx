@@ -1,19 +1,6 @@
 import { Component } from 'react'
 import { TextAttributes } from '@opentui/core'
-import type {
-  UIMessage,
-  TextUIPart,
-  ReasoningUIPart,
-  StepStartUIPart,
-  SourceUrlUIPart,
-  SourceDocumentUIPart,
-  FileUIPart,
-  ReasoningFileUIPart,
-  CustomContentUIPart,
-  DynamicToolUIPart,
-  ToolUIPart,
-  UITools,
-} from 'ai'
+import type { UIMessage, TextUIPart, DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
 import { isToolUIPart, getToolName } from 'ai'
 
 class ChatErrorBoundary extends Component<{ children: React.ReactNode; part: unknown; index: number }, { hasError: boolean }> {

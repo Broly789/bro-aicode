@@ -1,4 +1,3 @@
-import { appendFileSync } from 'fs'
 import { readFileExecute } from './read-file'
 import { writeFileExecute } from './write-file'
 import { editFileExecute } from './edit-file'
@@ -7,18 +6,6 @@ import { globExecute } from './glob'
 import { grepExecute } from './grep'
 import { bashExecute } from './bash'
 import type { ToolName } from '@brocode/tools'
-
-const DEBUG_LOG = '/tmp/brocode-debug.log'
-function debugLog(...args: unknown[]) {
-  try {
-    appendFileSync(
-      DEBUG_LOG,
-      args
-        .map((a) => (typeof a === 'string' ? a : JSON.stringify(a, null, 2)))
-        .join(' ') + '\n',
-    )
-  } catch {}
-}
 
 export type ToolCallPart = {
   type: `tool-${string}` | 'dynamic-tool'
@@ -53,8 +40,6 @@ export async function executeTool(part: ToolCallPart): Promise<ToolResult> {
   if (!fn) return { ok: false, error: `Unknown tool: ${part.toolName}` }
   try {
     const output = await fn(part.input, projectRoot)
-    // process.stdout.write(JSON.stringify(output, null, 2))
-
     return { ok: true, output }
   } catch (err) {
     return {

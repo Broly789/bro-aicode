@@ -26,7 +26,7 @@ export function ChatShell({
   onConfirm,
   onDeny,
 }: ChatShellProps) {
-  const isLoading = status === 'streaming'
+  const isInputDisabled = status === 'streaming' || status === 'confirming'
 
   return (
     <box flexDirection="column" flexGrow={1}>
@@ -86,7 +86,7 @@ export function ChatShell({
         height={1}
       />
 
-      <ChatTextArea onSubmit={onSubmit} disabled={isLoading} />
+      <ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} />
     </box>
   )
 }
