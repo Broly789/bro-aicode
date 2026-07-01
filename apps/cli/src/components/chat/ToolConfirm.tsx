@@ -19,17 +19,40 @@ export function ToolConfirm({
     if (event.name === 'n') onDeny()
   })
 
-  const inputStr = JSON.stringify(input, null, 2)
+  const inputEntries = Object.entries((input ?? {}) as Record<string, unknown>)
+    .map(([k, v]) => {
+      const val = typeof v === 'string' ? v : JSON.stringify(v)
+      return `${k}: ${val.length > 60 ? val.slice(0, 57) + '...' : val}`
+    })
+    .join('  ')
+
+  const confirmLabel = `Confirm ${toolName}`
 
   return (
-    <box width="100%" borderStyle="single" borderColor="#ffa500" padding={1} flexDirection="column">
-      <text fg="#ffa500" attributes={TextAttributes.BOLD}>⚠ Confirm {toolName}</text>
-      <text attributes={TextAttributes.DIM} wrapMode="word">{inputStr}</text>
-      <box height={1} />
-      <text>
-        <span fg="green" attributes={TextAttributes.BOLD}>Y</span>
-        <span attributes={TextAttributes.DIM}>es  </span>
-        <span fg="red" attributes={TextAttributes.BOLD}>N</span>
+    <box
+      width="100%"
+      borderStyle="single"
+      borderColor="#ffa500"
+      flexDirection="column"
+      flexShrink={0}
+    >
+      <text
+        fg="#ffa500"
+        attributes={TextAttributes.BOLD}
+        content={confirmLabel}
+        height={1}
+      />
+      <text attributes={TextAttributes.DIM} height={1}>
+        {inputEntries}
+      </text>
+      <text flexShrink={0} height={1}>
+        <span fg="lightgreen" attributes={TextAttributes.BOLD}>
+          Y
+        </span>
+        <span attributes={TextAttributes.DIM}>es </span>
+        <span fg="red" attributes={TextAttributes.BOLD}>
+          N
+        </span>
         <span attributes={TextAttributes.DIM}>o</span>
       </text>
     </box>
