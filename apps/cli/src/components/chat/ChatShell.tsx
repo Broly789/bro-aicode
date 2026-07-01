@@ -1,4 +1,5 @@
 import { TextAttributes } from '@opentui/core'
+import { useEffect, useState } from 'react'
 import type { UIMessage } from 'ai'
 import { ChatMessage } from './ChatMessage'
 import { ChatTextArea } from './ChatTextArea'
@@ -28,6 +29,18 @@ export function ChatShell({
 }: ChatShellProps) {
   const isInputDisabled = status === 'streaming' || status === 'confirming'
 
+  const [frame, setFrame] = useState(0)
+  useEffect(() => {
+    if (status !== 'streaming') {
+      setFrame(0)
+      return
+    }
+    const id = setInterval(() => setFrame((f) => (f + 1) % 4), 400)
+    return () => clearInterval(id)
+  }, [status])
+
+  const frames = ['思考中', '思考中.', '思考中..', '思考中...']
+
   return (
     <box flexDirection="column" flexGrow={1}>
       <scrollbox flexGrow={1} stickyScroll stickyStart="bottom">
@@ -48,14 +61,6 @@ export function ChatShell({
         ) : (
           messages.map((msg) => <ChatMessage key={msg.id} msg={msg} />)
         )}
-        {/* {status === 'streaming' &&
-        messages[messages.length - 1]?.role !== 'assistant' ? (
-          <box paddingLeft={1}>
-            <text attributes={TextAttributes.DIM | TextAttributes.ITALIC}>
-              Thinking...
-            </text>
-          </box>
-        ) : null} */}
       </scrollbox>
 
       {status === 'confirming' && confirmingTool ? (
@@ -70,7 +75,7 @@ export function ChatShell({
       <box height={1} paddingLeft={1}>
         {status === 'streaming' ? (
           <text attributes={TextAttributes.DIM | TextAttributes.ITALIC}>
-            思考中...
+            {frames[frame]}
           </text>
         ) : status === 'error' ? (
           <text fg="red" attributes={TextAttributes.DIM}>
