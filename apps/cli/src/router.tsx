@@ -7,12 +7,14 @@ import { Settings } from './screens/Settings'
 import { Llm } from './screens/Llm'
 import { AiChat } from './screens/AiChat'
 import { NotFound } from './screens/NotFound'
+import { ErrorFallback } from './components/ErrorFallback'
 
 export const router = createMemoryRouter(
   [
     {
       path: '/',
       element: <RootLayout />,
+      ErrorBoundary: ErrorFallback,
       children: [
         { index: true, element: <Home /> },
         { path: 'chat', element: <Chat /> },

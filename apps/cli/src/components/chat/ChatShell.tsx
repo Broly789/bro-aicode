@@ -2,21 +2,31 @@ import { TextAttributes } from '@opentui/core'
 import type { UIMessage } from 'ai'
 import { ChatMessage } from './ChatMessage'
 import { ChatTextArea } from './ChatTextArea'
+import { ToolConfirm } from './ToolConfirm'
+import type { ToolCallPart } from '../../tools/executor'
+
+export type AgentLoopStatus = 'ready' | 'streaming' | 'confirming' | 'error'
 
 type ChatShellProps = {
   messages: UIMessage[]
-  status: 'ready' | 'submitted' | 'streaming' | 'error'
+  status: AgentLoopStatus
   error: Error | undefined
+  confirmingTool: ToolCallPart | null
   onSubmit: (value: string) => void
+  onConfirm: () => void
+  onDeny: () => void
 }
 
 export function ChatShell({
   messages,
   status,
   error,
+  confirmingTool,
   onSubmit,
+  onConfirm,
+  onDeny,
 }: ChatShellProps) {
-  const isLoading = status === 'submitted' || status === 'streaming'
+  const isLoading = status === 'streaming'
 
   return (
     <box flexDirection="column" flexGrow={1}>
@@ -38,13 +48,30 @@ export function ChatShell({
         ) : (
           messages.map((msg) => <ChatMessage key={msg.id} msg={msg} />)
         )}
+        {/* {status === 'streaming' &&
+        messages[messages.length - 1]?.role !== 'assistant' ? (
+          <box paddingLeft={1}>
+            <text attributes={TextAttributes.DIM | TextAttributes.ITALIC}>
+              Thinking...
+            </text>
+          </box>
+        ) : null} */}
       </scrollbox>
 
+      {status === 'confirming' && confirmingTool ? (
+        <ToolConfirm
+          toolName={confirmingTool.toolName}
+          input={confirmingTool.input}
+          onConfirm={onConfirm}
+          onDeny={onDeny}
+        />
+      ) : null}
+
       <box height={1} paddingLeft={1}>
-        {status === 'submitted' ? (
-          <text attributes={TextAttributes.DIM}>Thinking...</text>
-        ) : status === 'streaming' ? (
-          <text attributes={TextAttributes.DIM}>...</text>
+        {status === 'streaming' ? (
+          <text attributes={TextAttributes.DIM | TextAttributes.ITALIC}>
+            思考中...
+          </text>
         ) : status === 'error' ? (
           <text fg="red" attributes={TextAttributes.DIM}>
             Failed: {error?.message ?? 'Unknown error'}

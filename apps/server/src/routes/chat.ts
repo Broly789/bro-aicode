@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import {
+  tool,
   convertToModelMessages,
   createUIMessageStreamResponse,
   isStepCount,
@@ -11,9 +12,16 @@ import {
   generateId,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
+import { toolDefs } from '@brocode/tools'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
-import { tools } from '../lib/tools'
+
+const tools = Object.fromEntries(
+  toolDefs.map((def) => [
+    def.name,
+    tool({ description: def.description, inputSchema: def.inputSchema }),
+  ]),
+) as unknown as { [K in (typeof toolDefs)[number]['name']]: ReturnType<typeof tool> }
 
 const MODEL = 'deepseek-v4-flash'
 
@@ -68,6 +76,12 @@ export const chatRoute = new Hono().post(
 
     const result = streamText({
       model: deepseek(MODEL),
+      system:
+        'You are a CLI coding assistant. Rules:\n' +
+        '1. Output ONLY plain text / Markdown (no HTML tags ever).\n' +
+        '2. Use ## headings, **bold**, `code` in Markdown, never <h2>, <b>, <code>.\n' +
+        '3. For file listings use code blocks.\n' +
+        '4. Keep responses concise — this is a terminal.\n',
       messages: modelMessages,
       tools,
       stopWhen: isStepCount(5),
@@ -76,7 +90,7 @@ export const chatRoute = new Hono().post(
           thinking: { type: 'enabled' },
         },
       },
-      onFinish: async ({ text, toolCalls, toolResults, finalStep }) => {
+      onFinish: async ({ text, toolCalls, finalStep }) => {
         const parts: Array<object> = []
         const reasoningText = finalStep.reasoningText
 
@@ -89,15 +103,12 @@ export const chatRoute = new Hono().post(
         }
 
         for (const tc of toolCalls) {
-          const tr = toolResults.find((r) => r.toolCallId === tc.toolCallId)
-          const part: Record<string, unknown> = {
+          parts.push({
             type: `tool-${tc.toolName}`,
             toolCallId: tc.toolCallId,
-            state: 'output-available',
+            state: 'call',
             input: tc.input,
-          }
-          if (tr) part.output = tr.output
-          parts.push(part)
+          })
         }
 
         try {

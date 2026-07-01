@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev:server": "bun run --filter @brocode/server dev",
-    "dev:cli": "bun run --cwd \"$PWD/apps/cli\" dev",
+    "dev:cli": "PROJECT_ROOT=$PWD bun run --cwd \"$PWD/apps/cli\" dev",
+    "dev:debug": "bun run --cwd \"$PWD/apps/cli\" dev 2> debug.log",
     "dev": "bun run dev:server & bun run dev:cli",
     "build:cli": "bun run --cwd \"$PWD/apps/cli\" build",
     "build": "bun run build:cli",

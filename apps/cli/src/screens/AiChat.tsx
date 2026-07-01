@@ -2,10 +2,10 @@ import { type KeyEvent } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { replace, useLocation, useNavigate, useParams } from 'react-router'
-import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, type UIMessage } from 'ai'
+import type { UIMessage } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
+import { useAgentLoop } from '../lib/use-agent-loop'
 import { ChatShell } from '../components/chat/ChatShell'
 
 const ChatRouteState = z.object({
@@ -93,19 +93,15 @@ function AiChatInner({
   const navigate = useNavigate()
   const sentRef = useRef(false)
 
-  const { messages, sendMessage, status, error } = useChat({
-    messages: initialMessages,
-    transport: new DefaultChatTransport({
-      api: client.api.chat[':sessionId']
-        .$url({ param: { sessionId } })
-        .toString(),
-    }),
-    onError: (err) => {
-      if (err.message?.includes('404')) {
-        navigate('/', { state: { sessionExpired: true } })
-      }
-    },
-  })
+  const {
+    messages,
+    status,
+    confirmingTool,
+    error,
+    sendMessage,
+    confirm,
+    deny,
+  } = useAgentLoop({ sessionId, initialMessages })
 
   const handleEsc = useCallback(
     (event: KeyEvent) => {
@@ -120,16 +116,16 @@ function AiChatInner({
   useEffect(() => {
     if (prompt && !sentRef.current) {
       sentRef.current = true
-      sendMessage({ text: prompt })
+      sendMessage(prompt)
     }
   }, [prompt, sendMessage])
 
   const handleSubmit = useCallback(
     (value: string) => {
-      if (status === 'submitted' || status === 'streaming') return
+      if (status === 'streaming') return
       const text = value.trim()
       if (!text) return
-      sendMessage({ text })
+      sendMessage(text)
     },
     [status, sendMessage],
   )
@@ -139,7 +135,10 @@ function AiChatInner({
       messages={messages}
       status={status}
       error={error}
+      confirmingTool={confirmingTool}
       onSubmit={handleSubmit}
+      onConfirm={confirm}
+      onDeny={deny}
     />
   )
 }
