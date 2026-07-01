@@ -7,13 +7,13 @@ import {
   isStepCount,
   streamText,
   toUIMessageStream,
-  tool,
   validateUIMessages,
   generateId,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
+import { tools } from '../lib/tools'
 
 const MODEL = 'deepseek-v4-flash'
 
@@ -24,57 +24,6 @@ const chatBodySchema = z.object({
 const chatParamSchema = z.object({
   sessionId: z.string(),
 })
-
-const weatherSchema = z.object({
-  location: z.string().describe('City and state/country'),
-})
-type WeatherParams = z.infer<typeof weatherSchema>
-
-const timeSchema = z.object({
-  timezone: z.string().describe('IANA timezone like America/New_York'),
-})
-type TimeParams = z.infer<typeof timeSchema>
-
-const stockSchema = z.object({
-  ticker: z.string().describe('Stock ticker symbol like AAPL, GOOGL'),
-})
-type StockParams = z.infer<typeof stockSchema>
-
-const tools = {
-  getWeather: tool({
-    description: 'Get the current weather for a location',
-    inputSchema: weatherSchema,
-    execute: async ({ location }: WeatherParams) => {
-      return { location, temperature: 72, conditions: 'sunny', humidity: '45%' }
-    },
-  }),
-  getCurrentTime: tool({
-    description: 'Get the current time for a timezone',
-    inputSchema: timeSchema,
-    execute: async ({ timezone }: TimeParams) => {
-      return {
-        timezone,
-        currentTime: new Date().toLocaleString('en-US', { timeZone: timezone }),
-      }
-    },
-  }),
-  getStockPrice: tool({
-    description: 'Get the current stock price for a ticker symbol',
-    inputSchema: stockSchema,
-    execute: async ({ ticker }: StockParams) => {
-      const validTickers = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
-      if (!validTickers.includes(ticker.toUpperCase())) {
-        throw new Error(
-          `Unknown ticker symbol: ${ticker}. Valid tickers: ${validTickers.join(', ')}`,
-        )
-      }
-      return {
-        ticker: ticker.toUpperCase(),
-        price: +(Math.random() * 500 + 50).toFixed(2),
-      }
-    },
-  }),
-}
 
 export const chatRoute = new Hono().post(
   '/:sessionId',
@@ -102,8 +51,8 @@ export const chatRoute = new Hono().post(
           sessionId,
           role: msg.role,
           content: msg.parts
-            .filter((p): p is { text: string } => 'text' in p)
-            .map((p) => p.text)
+            .filter((p) => p.type === 'text' || p.type === 'reasoning')
+            .map((p) => String((p as Record<string, unknown>).text ?? ''))
             .join('\n'),
           parts: msg.parts as object,
         })),
