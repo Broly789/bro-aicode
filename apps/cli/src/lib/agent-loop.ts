@@ -19,6 +19,7 @@ export type AgentLoopEvent =
   | { type: 'text'; id: string; text: string }
   | { type: 'reasoning'; id: string; text: string }
   | { type: 'tool-start'; toolCallId: string; toolName: string }
+  | { type: 'tool-executing'; toolCallId: string; toolName: string }
   | { type: 'tool-end'; toolCallId: string; output: unknown }
   | { type: 'done'; finishReason: string }
   | { type: 'error'; message: string }
@@ -271,6 +272,20 @@ export async function sendAndReceive(
   }
 }
 
+function insertFallback(
+  messages: UIMessage[],
+  text: string,
+): UIMessage[] {
+  return [
+    ...messages,
+    {
+      id: `fb-${Date.now()}`,
+      role: 'assistant' as const,
+      parts: [{ type: 'text' as const, text }],
+    },
+  ]
+}
+
 export async function runAgentLoop(
   apiUrl: string,
   initialMessages: UIMessage[],
@@ -280,6 +295,8 @@ export async function runAgentLoop(
   onConfirm?: (toolCall: ToolCallPart) => Promise<boolean>,
 ): Promise<AgentLoopResult> {
   let messages = initialMessages
+  let consecutiveToolOnlyRounds = 0
+  let consecutiveAllErrorRounds = 0
 
   for (let round = 0; round < 20; round++) {
     const { result } = await sendAndReceive(apiUrl, messages, onEvent)
@@ -294,6 +311,24 @@ export async function runAgentLoop(
       return { messages, finishReason: result.finishReason }
     }
 
+    // Guard 1: consecutive rounds with zero text/reasoning output = stuck tool loop
+    const hasContent = lastMsg.parts.some(
+      (p) => p.type === 'text' || p.type === 'reasoning',
+    )
+    if (!hasContent) {
+      consecutiveToolOnlyRounds++
+    } else {
+      consecutiveToolOnlyRounds = 0
+    }
+    if (consecutiveToolOnlyRounds >= 3) {
+      messages = insertFallback(
+        messages,
+        '⚠️ 多次工具调用均未返回有效内容，无法获取实时信息。以下是基于已有知识的回答：\n\n' +
+          '(Real-time search is unavailable. The tools did not return usable data after multiple attempts.)',
+      )
+      return { messages, finishReason: 'tool-loop-exhausted' }
+    }
+
     const pendingToolParts = lastMsg.parts
       .map((part, idx) => ({ part, idx }))
       .filter(
@@ -304,6 +339,9 @@ export async function runAgentLoop(
     if (pendingToolParts.length === 0) {
       return { messages, finishReason: result.finishReason }
     }
+
+    let executedCount = 0
+    let errorCount = 0
 
     for (const { part, idx } of pendingToolParts) {
       const toolPart = toToolCallPart(part)
@@ -332,7 +370,15 @@ export async function runAgentLoop(
         }
       }
 
+      onEvent?.({
+        type: 'tool-executing',
+        toolCallId: part.toolCallId,
+        toolName: part.toolName,
+      })
+
       const toolResult = await executeFn(toolPart)
+      executedCount++
+      if (!toolResult.ok) errorCount++
 
       const outputPart = toolResult.ok
         ? {
@@ -352,6 +398,22 @@ export async function runAgentLoop(
       ]
       lastMsg = { ...lastMsg, parts: newParts }
       messages[messages.length - 1] = lastMsg
+    }
+
+    // Guard 2: all executed tools errored → likely connectivity issue
+    if (executedCount > 0 && errorCount >= executedCount) {
+      consecutiveAllErrorRounds++
+    } else {
+      consecutiveAllErrorRounds = 0
+    }
+
+    if (consecutiveAllErrorRounds >= 2) {
+      messages = insertFallback(
+        messages,
+        '⚠️ 所有工具调用均失败，可能由于网络不通或 API 不可用。以下是基于已有知识的回答：\n\n' +
+          '(All tool calls failed. Network or API may be unavailable. Please check connectivity and try again.)',
+      )
+      return { messages, finishReason: 'tool-loop-exhausted' }
     }
   }
 

@@ -76,8 +76,20 @@ function textFromMsg(msg: UIMessage): string {
 
 type AnyToolPart = DynamicToolUIPart | ToolUIPart<UITools>
 
+function toolSummary(part: AnyToolPart): string {
+  const input = (part as Record<string, unknown>).input
+  if (!input || typeof input !== 'object') return ''
+  const obj = input as Record<string, unknown>
+  if (typeof obj.command === 'string') return obj.command.slice(0, 80)
+  if (typeof obj.path === 'string') return obj.path
+  if (typeof obj.pattern === 'string') return obj.pattern
+  const s = JSON.stringify(input).slice(0, 60)
+  return s
+}
+
 function ToolCallPart({ part }: { part: AnyToolPart }) {
   const name = typeof getToolName === 'function' ? getToolName(part) : 'tool'
+  const summary = toolSummary(part)
 
   switch (part.state) {
     case 'input-streaming':
@@ -89,7 +101,15 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
     case 'input-available':
       return (
         <text fg="#888" attributes={TextAttributes.DIM}>
-          → {String(name)}...
+          → {String(name)}
+          {summary ? ` ${summary}` : ''}...
+        </text>
+      )
+    case 'executing':
+      return (
+        <text fg="#ffa500" attributes={TextAttributes.BOLD}>
+          ⚡ {String(name)}
+          {summary ? ` ${summary}` : ''}
         </text>
       )
     case 'approval-requested':
@@ -104,11 +124,15 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
         </text>
       )
     case 'output-available':
-      return <text attributes={TextAttributes.DIM}>✓ {String(name)}</text>
+      return (
+        <text attributes={TextAttributes.DIM} fg="#6a6">
+          ✓ {String(name)}
+        </text>
+      )
     case 'output-error':
       return (
         <text fg="red">
-          [{String(name)}] error: {String(part.errorText ?? 'unknown')}
+          ✗ {String(name)}: {String(part.errorText ?? 'unknown')}
         </text>
       )
     case 'output-denied':

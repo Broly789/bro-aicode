@@ -5,6 +5,8 @@ import { listDirectoryExecute } from './list-directory/execute'
 import { globExecute } from './glob/execute'
 import { grepExecute } from './grep/execute'
 import { bashExecute } from './bash/execute'
+import { searchExecute } from './search/execute'
+import { fetchUrlExecute } from './fetch-url/execute'
 import { toolDefs, type ToolName } from './index'
 export { GuardrailError, resolveSafePath } from './guardrail'
 export type { ToolName }
@@ -27,6 +29,8 @@ const executorEntries = [
   ['glob', globExecute],
   ['grep', grepExecute],
   ['bash', bashExecute],
+  ['search', searchExecute],
+  ['fetch-url', fetchUrlExecute],
 ] as const satisfies readonly (readonly [ToolName, ToolExecutor])[]
 
 export const executors = Object.fromEntries(executorEntries)
@@ -72,4 +76,8 @@ export {
   grepTool,
   bashSchema,
   bashTool,
+  searchSchema,
+  searchTool,
+  fetchUrlSchema,
+  fetchUrlTool,
 } from './index'

@@ -100,6 +100,19 @@ export function useAgentLoop({
                 }
               }
 
+              if (event.type === 'tool-executing') {
+                const partIdx = last?.parts?.findIndex(
+                  (p) => 'toolCallId' in p && p.toolCallId === event.toolCallId,
+                )
+                if (partIdx !== undefined && partIdx >= 0) {
+                  const part = { ...(last.parts[partIdx] as Record<string, unknown>), state: 'executing' }
+                  const newParts = [...last.parts]
+                  newParts[partIdx] = part as UIMessage['parts'][number]
+                  last = { ...last, parts: newParts }
+                  msgs[msgs.length - 1] = last
+                }
+              }
+
               if (event.type === 'tool-end') {
                 const partIdx = last?.parts?.findIndex(
                   (p) => 'toolCallId' in p && p.toolCallId === event.toolCallId,
