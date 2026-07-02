@@ -5,7 +5,7 @@ import { client } from '../lib/client'
 
 export function Llm() {
   const { completion, complete, isLoading, error } = useCompletion({
-    api: client.api['llm-test'].$url().toString(),
+    api: client.api["llm-test"].$url().toString(),
   })
   const triggered = useRef(false)
 

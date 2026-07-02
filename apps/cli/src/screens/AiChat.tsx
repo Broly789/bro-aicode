@@ -43,11 +43,11 @@ export function AiChat() {
               Array.isArray(m.parts) && m.parts.length > 0
                 ? (m.parts as UIMessage['parts'])
                 : [
-                    {
-                      type: 'text' as const,
-                      text: (m.content as string) ?? '',
-                    },
-                  ],
+                  {
+                    type: 'text' as const,
+                    text: (m.content as string) ?? '',
+                  },
+                ],
           })),
         )
       })

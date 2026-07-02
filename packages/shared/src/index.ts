@@ -1,5 +1,1 @@
-export function greet(name: string): string {
-  return `Hello, ${name}!`
-}
-
-export const PROJECT_NAME = "brocode"
+export type { AppType } from '@brocode/server'

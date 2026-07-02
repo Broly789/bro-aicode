@@ -7,7 +7,7 @@ export function Chat() {
   const [runtime, setRuntime] = useState('...')
 
   useEffect(() => {
-    client.health.$get().then(async (res) => {
+    client.health.$get({}).then(async (res) => {
       const data = await res.json()
       setStatus(data.status)
       setRuntime(data.runtime)

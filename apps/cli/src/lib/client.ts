@@ -1,5 +1,5 @@
 import { hc } from 'hono/client'
-import type { AppType } from '@brocode/server'
+import type { AppType } from '@brocode/shared'
 
 const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
 

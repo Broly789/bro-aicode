@@ -4,19 +4,19 @@ import { systemInstructions } from './instructions'
 
 export { systemInstructions }
 
-const entries = Object.entries(toolSchemas) as [
-  keyof typeof toolSchemas,
-  (typeof toolSchemas)[keyof typeof toolSchemas],
-][]
+type ToolSchemaMap = typeof toolSchemas
+type ToolName = keyof ToolSchemaMap
 
-export const codingAgentTools = Object.fromEntries(
-  entries.map(([name, def]) => [
-    name,
-    tool({
+const toolNames = Object.keys(toolSchemas) as ToolName[]
+
+export const codingAgentTools = toolNames.reduce(
+  (acc, name) => {
+    const def = toolSchemas[name]
+    acc[name] = tool({
       description: def.description,
-      parameters: zodSchema(def.inputSchema as never),
-    }),
-  ]),
-) as {
-  [K in keyof typeof toolSchemas]: ReturnType<typeof tool>
-}
+      inputSchema: zodSchema(def.inputSchema as never),
+    })
+    return acc
+  },
+  {} as { [K in ToolName]: ReturnType<typeof tool> },
+)

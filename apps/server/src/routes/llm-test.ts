@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { streamText } from 'ai'
+import { createUIMessageStreamResponse, streamText, toUIMessageStream } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 
 export const llmTestRoute = new Hono().post('/', async (c) => {
@@ -8,5 +8,7 @@ export const llmTestRoute = new Hono().post('/', async (c) => {
     prompt: 'Hello, world!',
   })
 
-  return result.toDataStreamResponse()
+   return createUIMessageStreamResponse({
+    stream: toUIMessageStream({ stream: result.stream }),
+  });
 })
