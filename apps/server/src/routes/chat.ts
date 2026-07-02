@@ -10,6 +10,7 @@ import {
   toUIMessageStream,
   validateUIMessages,
   generateId,
+  zodSchema,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
 import { toolDefs } from '@brocode/tools'
@@ -19,7 +20,7 @@ import { prisma } from '../lib/db'
 const tools = Object.fromEntries(
   toolDefs.map((def) => [
     def.name,
-    tool({ description: def.description, inputSchema: def.inputSchema }),
+    tool({ description: def.description, inputSchema: zodSchema(def.inputSchema as any) }),
   ]),
 ) as unknown as { [K in (typeof toolDefs)[number]['name']]: ReturnType<typeof tool> }
 
