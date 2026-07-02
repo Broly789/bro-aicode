@@ -75,6 +75,7 @@ function textFromMsg(msg: UIMessage): string {
 }
 
 type AnyToolPart = DynamicToolUIPart | ToolUIPart<UITools>
+type ToolPartState = AnyToolPart['state'] | 'executing'
 
 function toolSummary(part: AnyToolPart): string {
   const input = (part as Record<string, unknown>).input
@@ -90,8 +91,9 @@ function toolSummary(part: AnyToolPart): string {
 function ToolCallPart({ part }: { part: AnyToolPart }) {
   const name = typeof getToolName === 'function' ? getToolName(part) : 'tool'
   const summary = toolSummary(part)
+  const state = part.state as ToolPartState
 
-  switch (part.state) {
+  switch (state) {
     case 'input-streaming':
       return (
         <text attributes={TextAttributes.DIM}>

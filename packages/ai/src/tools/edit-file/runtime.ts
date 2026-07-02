@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises'
 import { editFileSchema } from './schema'
-import { resolveSafePath } from '../guardrail'
+import { resolveSafePath } from '../../workspace'
 
-export async function editFileExecute(input: unknown, cwd: string) {
+export async function runEditFile(input: unknown, cwd: string) {
   const { path, oldText, newText } = editFileSchema.parse(input)
   const safePath = resolveSafePath(path, cwd)
   const content = await readFile(safePath, 'utf-8')

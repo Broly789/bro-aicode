@@ -1,8 +1,8 @@
 import { Glob } from 'bun'
 import { globSchema } from './schema'
-import { resolveSafePath } from '../guardrail'
+import { resolveSafePath } from '../../workspace'
 
-export async function globExecute(input: unknown, cwd: string) {
+export async function runGlob(input: unknown, cwd: string) {
   const { pattern, path } = globSchema.parse(input)
   const searchPath = path ? resolveSafePath(path, cwd) : cwd
   const glob = new Glob(pattern)

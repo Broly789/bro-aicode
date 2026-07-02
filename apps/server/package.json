@@ -9,8 +9,8 @@
   "types": "src/index.ts",
   "dependencies": {
     "@brocode/database": "workspace:*",
+    "@brocode/ai": "workspace:*",
     "@brocode/shared": "workspace:*",
-    "@brocode/tools": "workspace:*",
     "@hono/zod-validator": "^0.8.0",
     "@prisma/adapter-ppg": "^7",
     "@prisma/ppg": "^1",

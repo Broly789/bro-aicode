@@ -4,7 +4,7 @@ import type { UIMessage } from 'ai'
 import { ChatMessage } from './ChatMessage'
 import { ChatTextArea } from './ChatTextArea'
 import { ToolConfirm } from './ToolConfirm'
-import type { ToolCallPart } from '@brocode/tools/runtime'
+import type { ToolCallPart } from '@brocode/ai/client'
 
 export type AgentLoopStatus = 'ready' | 'streaming' | 'confirming' | 'error'
 

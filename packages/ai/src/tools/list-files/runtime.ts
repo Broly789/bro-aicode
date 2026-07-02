@@ -1,9 +1,9 @@
 import { readdir } from 'node:fs/promises'
-import { listDirectorySchema } from './schema'
-import { resolveSafePath } from '../guardrail'
+import { listFilesSchema } from './schema'
+import { resolveSafePath } from '../../workspace'
 
-export async function listDirectoryExecute(input: unknown, cwd: string) {
-  const { path } = listDirectorySchema.parse(input)
+export async function runListFiles(input: unknown, cwd: string) {
+  const { path } = listFilesSchema.parse(input)
   const safePath = resolveSafePath(path, cwd)
   const entries = await readdir(safePath, { withFileTypes: true })
   const files = entries

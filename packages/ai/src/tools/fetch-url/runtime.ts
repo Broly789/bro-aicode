@@ -56,7 +56,7 @@ function htmlToText(html: string): string {
   return s
 }
 
-export async function fetchUrlExecute(input: unknown) {
+export async function runFetchUrl(input: unknown) {
   const { url } = fetchUrlSchema.parse(input)
 
   const controller = new AbortController()

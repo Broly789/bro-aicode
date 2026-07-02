@@ -1,7 +1,7 @@
 import { bashSchema } from './schema'
-import { resolveSafePath } from '../guardrail'
+import { resolveSafePath } from '../../workspace'
 
-export async function bashExecute(input: unknown, cwd: string) {
+export async function runBash(input: unknown, cwd: string) {
   const { command, timeout } = bashSchema.parse(input)
   const safeCwd = resolveSafePath('.', cwd)
   const proc = Bun.spawn(['bash', '-c', command], {

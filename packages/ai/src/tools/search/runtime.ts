@@ -74,7 +74,7 @@ async function tryFetch(url: string, label: string): Promise<string | null> {
   }
 }
 
-export async function searchExecute(input: unknown) {
+export async function runSearch(input: unknown) {
   const { query } = searchSchema.parse(input)
   const q = encodeURIComponent(query)
 

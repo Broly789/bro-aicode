@@ -9,6 +9,7 @@ Bun workspaces monorepo (`apps/*`, `packages/*`).
 | `@brocode/cli` | `apps/cli` | `src/index.tsx` | OpenTUI (React) |
 | `@brocode/server` | `apps/server` | `src/index.ts` | Hono |
 | `@brocode/database` | `packages/database` | `src/index.ts` | Prisma (Postgres) |
+| `@brocode/ai` | `packages/ai` | `src/index.ts` (shared), `./server` (agent), `./client` (runners) | — |
 | `@brocode/shared` | `packages/shared` | `src/index.ts` | — |
 
 ## Workspace dependency setup

@@ -3,8 +3,8 @@ import type { UIMessage } from 'ai'
 import { client } from './client'
 import type { AgentLoopEvent } from './agent-loop'
 import { runAgentLoop } from './agent-loop'
-import { executeTool, needsConfirmation } from '@brocode/tools/runtime'
-import type { ToolCallPart } from '@brocode/tools/runtime'
+import { executeTool, needsConfirmation } from '@brocode/ai/client'
+import type { ToolCallPart } from '@brocode/ai/client'
 
 export type AgentLoopStatus =
   | 'ready'

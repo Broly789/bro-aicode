@@ -1,5 +1,7 @@
 import { resolve, relative } from 'node:path'
 
+export const WORKSPACE_ROOT = process.env.PROJECT_ROOT || process.cwd()
+
 export class GuardrailError extends Error {
   constructor(message: string) {
     super(message)

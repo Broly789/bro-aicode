@@ -2,7 +2,6 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import {
-  tool,
   convertToModelMessages,
   createUIMessageStreamResponse,
   isStepCount,
@@ -10,19 +9,11 @@ import {
   toUIMessageStream,
   validateUIMessages,
   generateId,
-  zodSchema,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
-import { toolDefs } from '@brocode/tools'
+import { codingAgentTools, systemInstructions } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
-
-const tools = Object.fromEntries(
-  toolDefs.map((def) => [
-    def.name,
-    tool({ description: def.description, inputSchema: zodSchema(def.inputSchema as any) }),
-  ]),
-) as unknown as { [K in (typeof toolDefs)[number]['name']]: ReturnType<typeof tool> }
 
 const MODEL = 'deepseek-v4-flash'
 
@@ -77,21 +68,9 @@ export const chatRoute = new Hono().post(
 
     const result = streamText({
       model: deepseek(MODEL),
-      system:
-        'You are a CLI coding assistant. Rules:\n' +
-        '1. Output ONLY plain text / Markdown (no HTML tags ever).\n' +
-        '2. Use ## headings, **bold**, `code` in Markdown, never <h2>, <b>, <code>.\n' +
-        '3. For file listings use code blocks.\n' +
-        '4. Keep responses concise — this is a terminal.\n' +
-        '5. For real-time information: use search() to find pages, ' +
-        'then fetch-url() to read article content. ' +
-        'If search returns content mentioning specific sites (weibo, sohu, baike, news sites), ' +
-        'use fetch-url() on those URLs. ' +
-        'Try different query formulations if search fails, ' +
-        'but limit to 3 attempts total. ' +
-        'If all searches fail, answer from your training data.\n',
+      system: systemInstructions,
       messages: modelMessages,
-      tools,
+      tools: codingAgentTools,
       stopWhen: isStepCount(20),
       providerOptions: {
         deepseek: {

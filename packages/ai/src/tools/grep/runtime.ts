@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { grepSchema } from './schema'
-import { resolveSafePath } from '../guardrail'
+import { resolveSafePath } from '../../workspace'
 
 async function* walk(dir: string): AsyncGenerator<string> {
   let stats
@@ -29,7 +29,7 @@ async function* walk(dir: string): AsyncGenerator<string> {
   }
 }
 
-export async function grepExecute(input: unknown, cwd: string) {
+export async function runGrep(input: unknown, cwd: string) {
   const { pattern, path } = grepSchema.parse(input)
   const searchPath = path ? resolveSafePath(path, cwd) : cwd
   const regex = new RegExp(pattern)
