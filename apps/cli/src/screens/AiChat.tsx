@@ -6,6 +6,7 @@ import type { UIMessage } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
 import { useAgentLoop } from '../lib/use-agent-loop'
+import { useModeContext } from '../lib/modes'
 import { ChatShell } from '../components/chat/ChatShell'
 
 const ChatRouteState = z.object({
@@ -82,6 +83,7 @@ function AiChatInner({
 }) {
   const navigate = useNavigate()
   const sentRef = useRef(false)
+  const { mode } = useModeContext()
 
   const {
     messages,
@@ -92,7 +94,7 @@ function AiChatInner({
     confirm,
     deny,
     stop,
-  } = useAgentLoop({ sessionId, initialMessages })
+  } = useAgentLoop({ sessionId, initialMessages, mode: mode.id })
 
   const handleEsc = useCallback(
     (event: KeyEvent) => {

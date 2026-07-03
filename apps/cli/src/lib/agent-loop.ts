@@ -2,6 +2,7 @@ import type { UIMessage } from 'ai'
 import { getToolName, isToolUIPart } from 'ai'
 import type { DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
 import type { ToolResult, ToolCallPart } from '@brocode/ai/client'
+import { isToolAllowed, MODES } from '@brocode/ai/client'
 import { findPartByToolCallId, updatePartAtIndex } from './message-helpers'
 
 type AnyToolUIPart = ToolUIPart<UITools> | DynamicToolUIPart
@@ -117,6 +118,7 @@ type StreamPart = {
 export async function sendAndReceive(
   apiUrl: string,
   messages: UIMessage[],
+  mode: string = 'build',
   onStreamEvent?: (event: AgentLoopEvent) => void,
   signal?: AbortSignal,
 ): Promise<{
@@ -128,7 +130,7 @@ export async function sendAndReceive(
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, mode }),
       signal,
     })
   } catch (err) {
@@ -346,13 +348,14 @@ export async function runAgentLoop(
   onEvent?: (event: AgentLoopEvent) => void,
   onConfirm?: (toolCall: ToolCallPart) => Promise<boolean>,
   signal?: AbortSignal,
+  mode: string = 'build',
 ): Promise<AgentLoopResult> {
   let messages = initialMessages
   let consecutiveToolOnlyRounds = 0   // 连续无文本输出的轮次计数
   let consecutiveAllErrorRounds = 0   // 连续全部工具失败的轮次计数
 
   for (let round = 0; round < 20; round++) {
-    const { result } = await sendAndReceive(apiUrl, messages, onEvent, signal)
+    const { result } = await sendAndReceive(apiUrl, messages, mode, onEvent, signal)
     messages = result.messages
 
     // 模型不再请求工具调用 → 本轮结束
@@ -400,6 +403,20 @@ export async function runAgentLoop(
 
     for (const { part, idx } of pendingToolParts) {
       const toolPart = toToolCallPart(part)
+
+      // 模式限制：当前模式不允许此工具 → 跳过
+      const currentMode = MODES.find((m) => m.id === mode) ?? MODES[0]
+      if (!isToolAllowed(toolPart.toolName, currentMode)) {
+        lastMsg = {
+          ...lastMsg,
+          parts: updatePartAtIndex(lastMsg.parts, idx, {
+            state: 'output-error',
+            errorText: `Tool "${toolPart.toolName}" is not available in ${currentMode.label} mode.`,
+          }),
+        }
+        messages[messages.length - 1] = lastMsg
+        continue
+      }
 
       // 需要用户确认的工具（如 bash、writeFile），先弹确认框
       if (needsConfirmFn(toolPart.toolName) && onConfirm) {

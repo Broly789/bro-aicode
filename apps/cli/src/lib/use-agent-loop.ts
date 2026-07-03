@@ -34,9 +34,11 @@ export type AgentLoopStatus =
 export function useAgentLoop({
   sessionId,
   initialMessages,
+  mode = 'build',
 }: {
   sessionId: string
   initialMessages: UIMessage[]
+  mode?: string
 }) {
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages)
   const [status, setStatus] = useState<AgentLoopStatus>('ready')
@@ -220,6 +222,7 @@ export function useAgentLoop({
             return approved
           },
           controller.signal,
+          mode,
         )
 
         // 循环结束，用最终消息列表覆盖流式更新的消息
@@ -237,7 +240,7 @@ export function useAgentLoop({
         abortRef.current = null
       }
     },
-    [apiUrl],
+    [apiUrl, mode],
   )
 
   /** 用户点击确认按钮：resolve 等待中的 Promise，恢复 agent 循环 */

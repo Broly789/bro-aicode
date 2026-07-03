@@ -11,7 +11,7 @@ import {
   generateId,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
-import { codingAgentTools, systemInstructions } from '@brocode/ai/server'
+import { allCodingTools, getCodingToolsForMode, getSystemInstructions } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
 
@@ -19,6 +19,7 @@ const MODEL = 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
+  mode: z.string().optional().default('build'),
 })
 
 const chatParamSchema = z.object({
@@ -31,7 +32,7 @@ export const chatRoute = new Hono().post(
   validateJson(chatBodySchema),
   async (c) => {
     const { sessionId } = c.req.valid('param')
-    const { messages } = c.req.valid('json')
+    const { messages, mode } = c.req.valid('json')
 
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
@@ -42,6 +43,7 @@ export const chatRoute = new Hono().post(
 
     const validatedMessages = await validateUIMessages({
       messages: messages ?? [],
+      tools: allCodingTools,
     })
 
     try {
@@ -68,9 +70,9 @@ export const chatRoute = new Hono().post(
 
     const result = streamText({
       model: deepseek(MODEL),
-      system: systemInstructions,
+      system: getSystemInstructions(mode),
       messages: modelMessages,
-      tools: codingAgentTools,
+      tools: getCodingToolsForMode(mode),
       stopWhen: isStepCount(20),
       providerOptions: {
         deepseek: {

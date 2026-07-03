@@ -3,7 +3,7 @@ export {
   type ToolName,
 } from './tools/schemas'
 
-export { systemInstructions } from './instructions'
+export { getSystemInstructions } from './instructions'
 
 export { WORKSPACE_ROOT, GuardrailError, resolveSafePath } from './workspace'
 

@@ -1,6 +1,7 @@
 import { TextAttributes, type KeyEvent } from '@opentui/core'
 import { useKeyboard, useRenderer } from '@opentui/react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
+import { useModeContext } from '../lib/modes'
 
 const navItems = [
   { key: 'h', path: '/', label: 'Home' },
@@ -14,6 +15,7 @@ export function RootLayout() {
   const renderer = useRenderer()
   const navigate = useNavigate()
   const location = useLocation()
+  const { mode, cycleMode } = useModeContext()
 
   useKeyboard((event: KeyEvent) => {
     if (event.name === 'h' && event.shift) navigate('/')
@@ -21,6 +23,7 @@ export function RootLayout() {
     // if (event.name === 'a' && event.shift) navigate('/about')
     if (event.name === 's' && event.shift) navigate('/settings')
     // if (event.name === 'l' && event.shift) navigate('/llm')
+    if (event.name === 'tab') cycleMode()
     if (event.name === 'q' && event.shift) renderer.destroy()
   })
 
@@ -63,6 +66,7 @@ export function RootLayout() {
             [S+{key.toUpperCase()}] {label}
           </text>
         ))}
+        <text attributes={TextAttributes.DIM}>[Tab] {mode.label}</text>
         <text attributes={TextAttributes.DIM}>[Esc] Stop</text>
         <text attributes={TextAttributes.DIM}>[S+Q] Quit</text>
       </box>
