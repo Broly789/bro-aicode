@@ -1,3 +1,4 @@
+import '../lib/logger'
 import { runReadFile } from './read-file/runtime'
 import { runWriteFile } from './write-file/runtime'
 import { runEditFile } from './edit-file/runtime'

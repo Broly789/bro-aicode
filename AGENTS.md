@@ -308,8 +308,19 @@ Set keys in root `.env.local` (also symlinked to `apps/cli/.env.local`):
 ```bash
 TAVILY_API_KEY="tvly-dev-..."
 BAIDU_API_KEY="bce-v3/..."
-# Priority: "tavily" | "baidu" | (empty = smart routing)
+# SEARCH_PRIORITY: tavily | baidu | (empty = smart routing)
 SEARCH_PRIORITY=
+# SEARCH_LOG: true = enable file logging, false or empty = disable
+SEARCH_LOG=true
+# 搜索 API 地址（一般无需修改）
+SEARCH_URL_TAVILY="https://api.tavily.com/search"
+SEARCH_URL_BAIDU="https://qianfan.baidubce.com/v2/ai_search/web_search"
+# 兜底爬虫 URL（{q} 会被替换为搜索词）
+SCRAPER_URL_BING="https://www.bing.com/search?q={q}&cc=cn"
+SCRAPER_URL_DUCKDUCKGO="https://html.duckduckgo.com/html/?q={q}"
+SCRAPER_URL_BAIDU="https://www.baidu.com/s?wd={q}"
+SCRAPER_URL_SOGOU="https://www.sogou.com/web?query={q}"
+SCRAPER_URL_GOOGLE="https://www.google.com/search?q={q}&hl=zh-CN"
 ```
 
 **Smart routing** (default): Chinese queries → Baidu first, English → Tavily first.  
@@ -325,12 +336,25 @@ SEARCH_PRIORITY=
 
 ### Logs
 
-Search calls are logged to `logs/search.log`:
+Search calls are logged to `logs/search.log` via the shared `logger` module (`packages/ai/src/lib/logger.ts`):
+
 ```
-[2026-07-03T07:30:44.089Z] START query="周杰伦" priority="auto" baiduKey=YES tavilyKey=YES
-[2026-07-03T07:30:44.090Z] Trying baidu...
-[2026-07-03T07:30:45.957Z] SUCCESS via baidu, contentLength=11722
+[2026-07-03T07:30:44.089Z] [search] START query="周杰伦" priority="auto" baiduKey=YES tavilyKey=YES
+[2026-07-03T07:30:44.090Z] [search] Trying baidu...
+[2026-07-03T07:30:45.957Z] [search] SUCCESS via baidu, contentLength=11722
 ```
+
+**Logger usage** (any module can use it):
+```ts
+import { logger } from '@brocode/ai'
+
+logger('search', 'Trying baidu...')
+logger('agent', 'Tool call received')
+logger('db', 'Connection established')
+// → logs/search.log, logs/agent.log, logs/db.log
+```
+
+Set `SEARCH_LOG=true` in `.env.local` to enable file logging. `console.error` always outputs regardless of the开关.
 
 ### Debugging
 
@@ -362,6 +386,7 @@ grep "scraper" logs/search.log
 
 | File | Purpose |
 |------|---------|
+| `packages/ai/src/lib/logger.ts` | Shared logger module — writes to `logs/{module}.log` |
 | `packages/ai/src/tools/search/runtime.ts` | Search logic: Baidu API, Tavily API, scraper fallback |
 | `packages/ai/src/tools/search/schema.ts` | Tool schema and description |
 | `packages/ai/src/instructions.ts` | System prompt (tells AI to use search, not fetch-url after) |

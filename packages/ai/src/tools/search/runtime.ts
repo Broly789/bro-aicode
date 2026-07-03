@@ -1,20 +1,10 @@
 import { searchSchema } from './schema'
-import { appendFileSync, mkdirSync } from 'fs'
-import { join } from 'path'
 
-const LOG_DIR = join(process.env.PROJECT_ROOT || process.cwd(), 'logs')
-try { mkdirSync(LOG_DIR, { recursive: true }) } catch {}
-const LOG_FILE = join(LOG_DIR, 'search.log')
-
-function logSearch(msg: string) {
-  const line = `[${new Date().toISOString()}] ${msg}\n`
-  try { appendFileSync(LOG_FILE, line) } catch {}
-  console.error(line.trimEnd())
-}
+const log = (msg: string) => logger('search', msg)
 
 // ---- Tavily Search API ----
 
-const TAVILY_API_URL = 'https://api.tavily.com/search'
+const TAVILY_API_URL_DEFAULT = 'https://api.tavily.com/search'
 
 interface TavilyResult {
   title: string
@@ -44,7 +34,7 @@ async function searchTavily(
     maxResults?: number
   },
 ): Promise<{ source: string; url: string; content: string } | null> {
-  const res = await fetch(TAVILY_API_URL, {
+  const res = await fetch(process.env.SEARCH_URL_TAVILY || TAVILY_API_URL_DEFAULT, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -59,14 +49,14 @@ async function searchTavily(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    logSearch(`[tavily] HTTP ${res.status}: ${text.slice(0, 200)}`)
+    log(`[tavily] HTTP ${res.status}: ${text.slice(0, 200)}`)
     return null
   }
 
   const data = await res.json() as TavilyResponse
 
   if (!data.results || data.results.length === 0) {
-    logSearch('[tavily] No results returned')
+    log('[tavily] No results returned')
     return null
   }
 
@@ -90,7 +80,7 @@ async function searchTavily(
 
 // ---- Baidu AI Search API ----
 
-const BAIDU_SEARCH_URL = 'https://qianfan.baidubce.com/v2/ai_search/web_search'
+const BAIDU_SEARCH_URL_DEFAULT = 'https://qianfan.baidubce.com/v2/ai_search/web_search'
 
 interface BaiduSearchReference {
   title?: string
@@ -119,7 +109,7 @@ async function searchBaidu(
   query: string,
   apiKey: string,
 ): Promise<{ source: string; url: string; content: string } | null> {
-  const res = await fetch(BAIDU_SEARCH_URL, {
+  const res = await fetch(process.env.SEARCH_URL_BAIDU || BAIDU_SEARCH_URL_DEFAULT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -136,7 +126,7 @@ async function searchBaidu(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    logSearch(`[baidu] HTTP ${res.status}: ${text.slice(0, 200)}`)
+    log(`[baidu] HTTP ${res.status}: ${text.slice(0, 200)}`)
     return null
   }
 
@@ -145,12 +135,12 @@ async function searchBaidu(
   // 处理百度 API 错误码
   if (data.code) {
     const errorMsg = data.message ?? 'Unknown error'
-    logSearch(`[baidu] Error ${data.code}: ${errorMsg}`)
+    log(`[baidu] Error ${data.code}: ${errorMsg}`)
     return null
   }
 
   if (!data.references || data.references.length === 0) {
-    logSearch('[baidu] No references returned')
+    log('[baidu] No references returned')
     return null
   }
 
@@ -301,7 +291,7 @@ async function tryFetch(url: string, label: string, retries = 2): Promise<string
       await randomDelay()
       const html = await fetchWithTimeout(url)
       if (isBlocked(html)) {
-        logSearch(`[scraper/${label}] blocked (attempt ${i + 1})`)
+        log(`[scraper/${label}] blocked (attempt ${i + 1})`)
         if (i < retries) {
           await randomDelay(500, 1500)
           continue
@@ -310,7 +300,7 @@ async function tryFetch(url: string, label: string, retries = 2): Promise<string
       }
       return extractSearchResults(html, label)
     } catch (err) {
-      logSearch(`[scraper/${label}] ${err instanceof Error ? err.message : String(err)} (attempt ${i + 1})`)
+      log(`[scraper/${label}] ${err instanceof Error ? err.message : String(err)} (attempt ${i + 1})`)
       if (i < retries) {
         await randomDelay(300, 1000)
       }
@@ -327,11 +317,11 @@ async function searchScraper(query: string): Promise<{ source: string; url: stri
   const q = encodeURIComponent(query)
 
   const engines: [string, string][] = [
-    ['bing', `https://www.bing.com/search?q=${q}&cc=cn`],
-    ['duckduckgo', `https://html.duckduckgo.com/html/?q=${q}`],
-    ['baidu', `https://www.baidu.com/s?wd=${q}`],
-    ['sogou', `https://www.sogou.com/web?query=${q}`],
-    ['google', `https://www.google.com/search?q=${q}&hl=zh-CN`],
+    ['bing', (process.env.SCRAPER_URL_BING || 'https://www.bing.com/search?q={q}&cc=cn').replace('{q}', q)],
+    ['duckduckgo', (process.env.SCRAPER_URL_DUCKDUCKGO || 'https://html.duckduckgo.com/html/?q={q}').replace('{q}', q)],
+    ['baidu', (process.env.SCRAPER_URL_BAIDU || 'https://www.baidu.com/s?wd={q}').replace('{q}', q)],
+    ['sogou', (process.env.SCRAPER_URL_SOGOU || 'https://www.sogou.com/web?query={q}').replace('{q}', q)],
+    ['google', (process.env.SCRAPER_URL_GOOGLE || 'https://www.google.com/search?q={q}&hl=zh-CN').replace('{q}', q)],
   ]
 
   for (const [label, url] of engines) {
@@ -359,7 +349,7 @@ export async function runSearch(input: unknown) {
   const baiduKey = process.env.BAIDU_API_KEY
   const priority = (process.env.SEARCH_PRIORITY || '').toLowerCase()
 
-  logSearch(`START query="${query}" priority="${priority || 'auto'}" baiduKey=${baiduKey ? 'YES' : 'NO'} tavilyKey=${tavilyKey ? 'YES' : 'NO'}`)
+  log(`START query="${query}" priority="${priority || 'auto'}" baiduKey=${baiduKey ? 'YES' : 'NO'} tavilyKey=${tavilyKey ? 'YES' : 'NO'}`)
 
   // 定义搜索引擎顺序
   type SearchFn = () => Promise<{ source: string; url: string; content: string } | null>
@@ -385,24 +375,24 @@ export async function runSearch(input: unknown) {
 
   // 依次尝试 API
   for (const engine of engines) {
-    logSearch(`Trying ${engine.name}...`)
+    log(`Trying ${engine.name}...`)
     const result = await engine.fn()
     if (result) {
-      logSearch(`SUCCESS via ${result.source}, contentLength=${result.content.length}`)
+      log(`SUCCESS via ${result.source}, contentLength=${result.content.length}`)
       return result
     }
-    logSearch(`${engine.name} returned null`)
+    log(`${engine.name} returned null`)
   }
 
   // 降级为爬虫
-  logSearch('All APIs failed, falling back to scraper...')
+  log('All APIs failed, falling back to scraper...')
   const scraperResult = await searchScraper(query)
   if (scraperResult) {
-    logSearch(`SUCCESS via scraper/${scraperResult.source}, contentLength=${scraperResult.content.length}`)
+    log(`SUCCESS via scraper/${scraperResult.source}, contentLength=${scraperResult.content.length}`)
     return scraperResult
   }
 
-  logSearch('FAILED: All search engines returned no results')
+  log('FAILED: All search engines returned no results')
   return {
     source: 'none',
     error:
