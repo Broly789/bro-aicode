@@ -93,6 +93,11 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
   const summary = toolSummary(part)
   const state = part.state as ToolPartState
 
+  // 搜索工具输出中提取搜索引擎来源
+  const searchSource = name === 'search' && part.state === 'output-available'
+    ? ((part as Record<string, unknown>).output as Record<string, unknown>)?.source
+    : null
+
   switch (state) {
     case 'input-streaming':
       return (
@@ -129,6 +134,7 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
       return (
         <text attributes={TextAttributes.DIM} fg="#6a6">
           ✓ {String(name)}
+          {searchSource ? ` (${String(searchSource)})` : ''}
         </text>
       )
     case 'output-error':

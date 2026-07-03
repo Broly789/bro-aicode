@@ -11,7 +11,7 @@ import type { ToolName } from './schemas'
 
 type ToolRunner = (input: unknown, cwd: string) => Promise<unknown>
 
-export const toolRunners: Record<ToolName, ToolRunner> = {
+export const toolRunners = {
   readFile: runReadFile,
   writeFile: runWriteFile,
   editFile: runEditFile,
@@ -21,7 +21,7 @@ export const toolRunners: Record<ToolName, ToolRunner> = {
   bash: runBash,
   search: runSearch,
   'fetch-url': runFetchUrl,
-}
+} as const satisfies Record<ToolName, ToolRunner>
 
 const _confirmable = [
   'writeFile',
@@ -43,7 +43,7 @@ const projectRoot = process.env.PROJECT_ROOT || process.cwd()
 export type ToolCallPart = {
   type: `tool-${string}` | 'dynamic-tool'
   toolCallId: string
-  toolName: string
+  toolName: ToolName
   state: string
   input: unknown
 }
@@ -51,10 +51,11 @@ export type ToolCallPart = {
 export async function executeTool(
   part: ToolCallPart,
 ): Promise<ToolResult> {
-  const runner = toolRunners[part.toolName as ToolName]
+  const runner = toolRunners[part.toolName]
   if (!runner) return { ok: false, error: `Unknown tool: ${part.toolName}` }
   try {
     const output = await runner(part.input, projectRoot)
+    console.error(`[tool] ${part.toolName} completed, output type: ${JSON.stringify(output, null, 2)}`)
     return { ok: true, output }
   } catch (err) {
     return {

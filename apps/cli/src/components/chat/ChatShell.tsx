@@ -5,8 +5,7 @@ import { ChatMessage } from './ChatMessage'
 import { ChatTextArea } from './ChatTextArea'
 import { ToolConfirm } from './ToolConfirm'
 import type { ToolCallPart } from '@brocode/ai/client'
-
-export type AgentLoopStatus = 'ready' | 'streaming' | 'confirming' | 'error'
+import type { AgentLoopStatus } from '../../lib/use-agent-loop'
 
 type ChatShellProps = {
   messages: UIMessage[]

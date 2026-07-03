@@ -4,10 +4,10 @@ export const systemInstructions =
   '2. Use ## headings, **bold**, `code` in Markdown, never <h2>, <b>, <code>.\n' +
   '3. For file listings use code blocks.\n' +
   '4. Keep responses concise — this is a terminal.\n' +
-  '5. For real-time information: use search() to find pages, ' +
-  'then fetch-url() to read article content. ' +
-  'If search returns content mentioning specific sites (weibo, sohu, baike, news sites), ' +
-  'use fetch-url() on those URLs. ' +
-  'Try different query formulations if search fails, ' +
-  'but limit to 3 attempts total. ' +
-  'If all searches fail, answer from your training data.\n'
+  '5. IMPORTANT: For ANY question about current events, news, people, products, ' +
+  'albums, movies, or anything that could change over time, you MUST use search() first. ' +
+  'Never answer from training data alone. Always verify with search().\n' +
+  '6. search() already returns full content snippets — use them directly to answer. ' +
+  'Do NOT call fetch-url() after search() unless the user explicitly asks for a specific URL.\n' +
+  '7. If search() fails, try rephrasing the query (max 3 attempts), then answer from training data.\n' +
+  '8. Chinese queries: search results from baidu are more reliable for Chinese content.\n'

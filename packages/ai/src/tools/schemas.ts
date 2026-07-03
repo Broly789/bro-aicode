@@ -7,6 +7,21 @@ import { grepTool } from './grep/schema'
 import { bashTool } from './bash/schema'
 import { searchTool } from './search/schema'
 import { fetchUrlTool } from './fetch-url/schema'
+import type { ToolSchema } from './types'
+
+const toolDefs = [
+  readFileTool,
+  writeFileTool,
+  editFileTool,
+  listFilesTool,
+  globTool,
+  grepTool,
+  bashTool,
+  searchTool,
+  fetchUrlTool,
+] as const
+
+export type ToolName = typeof toolDefs[number]['name']
 
 export const toolSchemas = {
   [readFileTool.name]: readFileTool,
@@ -18,6 +33,4 @@ export const toolSchemas = {
   [bashTool.name]: bashTool,
   [searchTool.name]: searchTool,
   [fetchUrlTool.name]: fetchUrlTool,
-} as const
-
-export type ToolName = keyof typeof toolSchemas
+} as const satisfies Record<ToolName, ToolSchema>

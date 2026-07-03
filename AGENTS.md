@@ -282,3 +282,88 @@ The `$url()` method returns a typed URL derived from the Hono route definition. 
 import { hc, type InferRequestType, type InferResponseType } from "hono/client"
 import type { AppType } from "@brocode/server"
 ```
+
+## Web Search Integration
+
+`@brocode/ai` provides a `search()` tool for real-time web search. Execution runs on the **CLI side** (via `packages/ai/src/tools/runners.ts` → `search/runtime.ts`), not the server.
+
+### Supported engines
+
+| Engine | Best for | Free tier | API key env var | Docs |
+|--------|----------|-----------|-----------------|------|
+| [Baidu AI Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Chinese content, news, entertainment | 50 次/天 | `BAIDU_API_KEY` | [API 文档](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) |
+| [Tavily](https://tavily.com/) | International content, AI-optimized search | 1,000 次/月 | `TAVILY_API_KEY` | [API 文档](https://docs.tavily.com/) |
+| Scraper (fallback) | When APIs fail | unlimited | none | — |
+
+**Engine intros:**
+
+- **Baidu AI Search (千帆 AI Search)** — 百度官方搜索 API，基于百度搜索大数据，返回结构化的网页引用（references）。对中文内容（娱乐、新闻、百科）质量极高，支持时效性过滤。认证方式为 `Authorization: Bearer <api_key>`，接口 `POST /v2/ai_search/web_search`。免费额度 50 次/天（按天发放，用完当天需等次日or开通付费），1,500 次/月。[额度查询](https://console.bce.baidu.com/qianfan/studio/resource)
+
+- **Tavily** — AI 专用搜索引擎，专为 LLM RAG 场景优化。返回干净的文本内容 + AI 生成的 Answer 摘要，无需二次抓取。适合英文/国际内容查询。免费额度 1,000 次/月，支持 `basic` 和 `advanced` 两种搜索深度。[额度查询](https://app.tavily.com/home)
+
+### Configuration
+
+Set keys in root `.env.local` (also symlinked to `apps/cli/.env.local`):
+
+```bash
+TAVILY_API_KEY="tvly-dev-..."
+BAIDU_API_KEY="bce-v3/..."
+# Priority: "tavily" | "baidu" | (empty = smart routing)
+SEARCH_PRIORITY=
+```
+
+**Smart routing** (default): Chinese queries → Baidu first, English → Tavily first.  
+**Manual override**: Set `SEARCH_PRIORITY=tavily` or `SEARCH_PRIORITY=baidu` to force one engine.
+
+### How it works
+
+1. AI calls `search()` tool with `{ query: "..." }`
+2. CLI executes `runSearch()` from `packages/ai/src/tools/search/runtime.ts`
+3. Based on `SEARCH_PRIORITY` or language detection, tries engines in order
+4. Returns `{ source, url, content }` — content includes full snippets, no need for follow-up `fetch-url()`
+5. UI displays `✓ search (baidu)` / `✓ search (tavily)` / `✓ search (bing)` showing which engine was used
+
+### Logs
+
+Search calls are logged to `logs/search.log`:
+```
+[2026-07-03T07:30:44.089Z] START query="周杰伦" priority="auto" baiduKey=YES tavilyKey=YES
+[2026-07-03T07:30:44.090Z] Trying baidu...
+[2026-07-03T07:30:45.957Z] SUCCESS via baidu, contentLength=11722
+```
+
+### Debugging
+
+Since OpenTUI captures stdout/stderr, `console.log` won't be visible in the terminal. All search logs go to `logs/search.log` instead.
+
+**Monitor search in real-time** (run in a separate terminal):
+```bash
+tail -f logs/search.log
+```
+
+**Check recent searches:**
+```bash
+tail -20 logs/search.log
+```
+
+**Filter by engine:**
+```bash
+grep "baidu" logs/search.log
+grep "tavily" logs/search.log
+grep "scraper" logs/search.log
+```
+
+**Clear logs:**
+```bash
+> logs/search.log
+```
+
+### Key files
+
+| File | Purpose |
+|------|---------|
+| `packages/ai/src/tools/search/runtime.ts` | Search logic: Baidu API, Tavily API, scraper fallback |
+| `packages/ai/src/tools/search/schema.ts` | Tool schema and description |
+| `packages/ai/src/instructions.ts` | System prompt (tells AI to use search, not fetch-url after) |
+| `packages/ai/src/tools/runners.ts` | Maps `search` → `runSearch` for CLI execution |
+| `apps/cli/src/components/chat/ChatMessage.tsx` | UI rendering of search source label |

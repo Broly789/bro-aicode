@@ -7,8 +7,8 @@ export const searchSchema = z.object({
 export const searchTool = {
   name: 'search' as const,
   description:
-    'Search the web by fetching search result pages (Baidu → Sogou → Bing → DuckDuckGo → Google). ' +
-    'Returns text content extracted from the search results page. ' +
-    'Use fetch-url() to read specific articles found in results.',
+    'Search the web for real-time information. Uses Baidu API (better for Chinese content) ' +
+    'with fallback to Tavily API and search engine scraping. ' +
+    'Returns titles, URLs, and full content snippets — use the content directly to answer.',
   inputSchema: searchSchema,
 }
