@@ -1,7 +1,7 @@
 import { type KeyEvent } from '@opentui/core'
 import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { replace, useLocation, useNavigate, useParams } from 'react-router'
+import { useLocation, useNavigate, useParams } from 'react-router'
 import type { UIMessage } from 'ai'
 import { z } from 'zod'
 import { client } from '../lib/client'
@@ -53,16 +53,6 @@ export function AiChat() {
       })
   }, [sessionId, navigate])
 
-  const handleEsc = useCallback(
-    (event: KeyEvent) => {
-      if (event.name === 'escape') {
-        navigate('/')
-      }
-    },
-    [navigate],
-  )
-  useKeyboard(handleEsc)
-
   if (initialMessages === null) {
     return (
       <box alignItems="center" justifyContent="center" flexGrow={1}>
@@ -101,15 +91,20 @@ function AiChatInner({
     sendMessage,
     confirm,
     deny,
+    stop,
   } = useAgentLoop({ sessionId, initialMessages })
 
   const handleEsc = useCallback(
     (event: KeyEvent) => {
       if (event.name === 'escape') {
-        navigate('/')
+        if (status === 'streaming') {
+          stop()
+        } else {
+          navigate('/')
+        }
       }
     },
-    [navigate],
+    [navigate, status, stop],
   )
   useKeyboard(handleEsc)
 

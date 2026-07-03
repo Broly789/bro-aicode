@@ -3,11 +3,11 @@ import { useKeyboard, useRenderer } from '@opentui/react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 
 const navItems = [
-  { key: '1', path: '/', label: 'Home' },
-  // { key: '2', path: '/chat', label: 'Chat' },
-  { key: '3', path: '/about', label: 'About' },
-  { key: '4', path: '/settings', label: 'Settings' },
-  { key: '5', path: '/llm', label: 'LLM' },
+  { key: 'h', path: '/', label: 'Home' },
+  // { key: 'c', path: '/chat', label: 'Chat' },
+  // { key: 'a', path: '/about', label: 'About' },
+  { key: 's', path: '/settings', label: 'Settings' },
+  // { key: 'l', path: '/llm', label: 'LLM' },
 ] as const
 
 export function RootLayout() {
@@ -16,11 +16,11 @@ export function RootLayout() {
   const location = useLocation()
 
   useKeyboard((event: KeyEvent) => {
-    if (event.name === '1' && event.shift) navigate('/')
-    // if (event.name === '2' && event.shift) navigate('/chat')
-    if (event.name === '3' && event.shift) navigate('/about')
-    if (event.name === '4' && event.shift) navigate('/settings')
-    if (event.name === '5' && event.shift) navigate('/llm')
+    if (event.name === 'h' && event.shift) navigate('/')
+    // if (event.name === 'c' && event.shift) navigate('/chat')
+    // if (event.name === 'a' && event.shift) navigate('/about')
+    if (event.name === 's' && event.shift) navigate('/settings')
+    // if (event.name === 'l' && event.shift) navigate('/llm')
     if (event.name === 'q' && event.shift) renderer.destroy()
   })
 
@@ -60,10 +60,11 @@ export function RootLayout() {
                 : TextAttributes.NONE
             }
           >
-            [S+{key}] {label}
+            [S+{key.toUpperCase()}] {label}
           </text>
         ))}
-        <text attributes={TextAttributes.DIM}>[S+q] Quit</text>
+        <text attributes={TextAttributes.DIM}>[Esc] Stop</text>
+        <text attributes={TextAttributes.DIM}>[S+Q] Quit</text>
       </box>
     </box>
   )

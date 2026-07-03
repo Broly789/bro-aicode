@@ -46,6 +46,9 @@ export function useAgentLoop({
   // 防止并发发送：同一时刻只允许一个 sendMessage 在运行
   const runningRef = useRef(false)
 
+  // 用于中断流式请求的 AbortController
+  const abortRef = useRef<AbortController | null>(null)
+
   // 工具确认的 Promise resolve 函数。
   // sendMessage 内部 await 一个 Promise，confirm/deny 调用 resolve 来恢复执行。
   const confirmResolveRef = useRef<((value: boolean) => void) | null>(null)
@@ -72,6 +75,9 @@ export function useAgentLoop({
     async (text: string) => {
       if (runningRef.current) return
       runningRef.current = true
+
+      const controller = new AbortController()
+      abortRef.current = controller
 
       setStatus('streaming')
       setError(undefined)
@@ -213,16 +219,22 @@ export function useAgentLoop({
             setStatus('streaming')
             return approved
           },
+          controller.signal,
         )
 
         // 循环结束，用最终消息列表覆盖流式更新的消息
         setMessages(result.messages)
         setStatus('ready')
       } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
-        setStatus('error')
+        if (controller.signal.aborted) {
+          setStatus('ready')
+        } else {
+          setError(err instanceof Error ? err : new Error(String(err)))
+          setStatus('error')
+        }
       } finally {
         runningRef.current = false
+        abortRef.current = null
       }
     },
     [apiUrl],
@@ -238,6 +250,11 @@ export function useAgentLoop({
     confirmResolveRef.current?.(false)
   }, [])
 
+  /** 中断当前流式请求 */
+  const stop = useCallback(() => {
+    abortRef.current?.abort()
+  }, [])
+
   return {
     messages,
     status,
@@ -246,5 +263,6 @@ export function useAgentLoop({
     sendMessage,
     confirm,
     deny,
+    stop,
   }
 }

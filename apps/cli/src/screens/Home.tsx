@@ -18,7 +18,7 @@ export function Home() {
   const handleSubmit = async (value: string) => {
     const res = await client.api.sessions.$post({})
     const { id } = (await res.json()) as { id: string }
-    navigate(`/sessions/${id}`, { state: { prompt: value } })
+    navigate(`/session/${id}`, { state: { prompt: value } })
   }
 
   return (

@@ -118,15 +118,28 @@ export async function sendAndReceive(
   apiUrl: string,
   messages: UIMessage[],
   onStreamEvent?: (event: AgentLoopEvent) => void,
+  signal?: AbortSignal,
 ): Promise<{
   events: AgentLoopEvent[]
   result: AgentLoopResult
 }> {
-  const res = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages }),
-  })
+  let res: Response
+  try {
+    res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages }),
+      signal,
+    })
+  } catch (err) {
+    if (signal?.aborted) {
+      return {
+        events: [],
+        result: { messages, finishReason: 'aborted' },
+      }
+    }
+    throw err
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => 'Unknown error')
@@ -163,6 +176,7 @@ export async function sendAndReceive(
   while (true) {
     const { done, value } = await reader.read()
     if (done) break
+    if (signal?.aborted) break
 
     const chunk = value as {
       type: string
@@ -331,13 +345,14 @@ export async function runAgentLoop(
   needsConfirmFn: (toolName: string) => boolean,
   onEvent?: (event: AgentLoopEvent) => void,
   onConfirm?: (toolCall: ToolCallPart) => Promise<boolean>,
+  signal?: AbortSignal,
 ): Promise<AgentLoopResult> {
   let messages = initialMessages
   let consecutiveToolOnlyRounds = 0   // 连续无文本输出的轮次计数
   let consecutiveAllErrorRounds = 0   // 连续全部工具失败的轮次计数
 
   for (let round = 0; round < 20; round++) {
-    const { result } = await sendAndReceive(apiUrl, messages, onEvent)
+    const { result } = await sendAndReceive(apiUrl, messages, onEvent, signal)
     messages = result.messages
 
     // 模型不再请求工具调用 → 本轮结束
