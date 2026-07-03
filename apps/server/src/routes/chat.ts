@@ -15,7 +15,7 @@ import { allCodingTools, getCodingToolsForMode, getSystemInstructions } from '@b
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
 
-const MODEL = 'deepseek-v4-flash'
+const MODEL = process.env.AI_MODEL ?? 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
