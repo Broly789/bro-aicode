@@ -23,10 +23,12 @@ export const toolRunners: Record<ToolName, ToolRunner> = {
   'fetch-url': runFetchUrl,
 }
 
-export const confirmableTools = new Set<ToolName>([
+const _confirmable = [
   'writeFile',
   'bash',
-])
+] as const satisfies readonly ToolName[]
+
+export const confirmableTools = new Set<ToolName>(_confirmable)
 
 export function needsConfirmation(toolName: string): boolean {
   return confirmableTools.has(toolName as ToolName)

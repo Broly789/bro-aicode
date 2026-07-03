@@ -17,28 +17,7 @@ export const toolSchemas = {
   [grepTool.name]: grepTool,
   [bashTool.name]: bashTool,
   [searchTool.name]: searchTool,
-  ['fetch-url' as const]: fetchUrlTool,
+  [fetchUrlTool.name]: fetchUrlTool,
 } as const
 
 export type ToolName = keyof typeof toolSchemas
-
-export {
-  readFileTool,
-  writeFileTool,
-  editFileTool,
-  listFilesTool,
-  globTool,
-  grepTool,
-  bashTool,
-  searchTool,
-  fetchUrlTool,
-} from './read-file/schema'
-export { readFileSchema } from './read-file/schema'
-export { writeFileSchema } from './write-file/schema'
-export { editFileSchema } from './edit-file/schema'
-export { listFilesSchema } from './list-files/schema'
-export { globSchema } from './glob/schema'
-export { grepSchema } from './grep/schema'
-export { bashSchema } from './bash/schema'
-export { searchSchema } from './search/schema'
-export { fetchUrlSchema } from './fetch-url/schema'
