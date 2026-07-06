@@ -27,17 +27,44 @@ export function Home() {
       alignItems="center"
       justifyContent="center"
       flexGrow={1}
+      paddingLeft={2}
+      paddingRight={2}
     >
       {sessionExpired && (
-        <box marginBottom={1}>
+        <box marginBottom={1} paddingX={2}>
           <text fg="yellow" attributes={TextAttributes.BOLD}>
-            Session expired or invalid. Start a new conversation.
+            ⚠ Session expired or invalid. Start a new conversation.
           </text>
         </box>
       )}
+
       <AsciiArt font="slick" color="#00FFFF" />
+
       <box style={{ width: '100%', height: 1 }} />
+
+      <text
+        fg="#888"
+        attributes={TextAttributes.DIM}
+        marginBottom={1}
+      >
+        AI-powered coding assistant for your terminal
+      </text>
+
       <TextArea onSubmit={handleSubmit} />
+
+      <box
+        flexDirection="row"
+        justifyContent="center"
+        gap={3}
+        marginTop={2}
+      >
+        <text fg="#666" attributes={TextAttributes.DIM}>
+          [Tab] Switch mode
+        </text>
+        <text fg="#666" attributes={TextAttributes.DIM}>
+          [Shift+Q] Quit
+        </text>
+      </box>
     </box>
   )
 }

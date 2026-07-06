@@ -1,6 +1,8 @@
 import { useRef, useCallback, useEffect } from 'react'
-import { type TextareaRenderable, type KeyBinding } from '@opentui/core'
+import { type TextareaRenderable, type KeyBinding, TextAttributes } from '@opentui/core'
 import { useModeContext } from '../lib/modes'
+
+const MODEL = process.env.AI_MODEL ?? 'unknown'
 
 export const TEXTAREA_KEY_BINDINGS: KeyBinding[] = [
   { name: 'return', action: 'submit' },
@@ -36,24 +38,43 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
     instance.onSubmit = handleSubmit
   }, [handleSubmit])
 
-  const modeColor = mode.id === 'build' ? 'green' : 'yellow'
+  const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
+  const borderColor = disabled ? '#333' : modeColor
 
   return (
-    <box flexShrink={0} width="100%" flexDirection="column">
-      <box borderStyle="rounded" borderColor="#00FFFF">
-        <textarea
-          ref={textareaRef}
-          placeholder="Ask anything... Enter to submit | Shift+Enter new line"
-          keyBindings={TEXTAREA_KEY_BINDINGS}
-          width="100%"
-          height={4}
-          wrapMode="word"
-          focused={!disabled}
+    <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4}>
+      <box flexDirection="row">
+        {/* 左侧高亮边框 */}
+        <box
+          width={1}
+          backgroundColor={borderColor}
         />
+        {/* 输入框 */}
+        <box flexGrow={1} backgroundColor="#1a1a2e" paddingLeft={1} paddingRight={1}>
+          <textarea
+            ref={textareaRef}
+            placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
+            keyBindings={TEXTAREA_KEY_BINDINGS}
+            width="100%"
+            height={5}
+            wrapMode="word"
+            focused={!disabled}
+          />
+        </box>
       </box>
-      <text paddingLeft={1} fg={modeColor}>
-        [{mode.label}] {mode.description}
-      </text>
+      <box flexDirection="row" justifyContent="space-between" paddingLeft={1}>
+        <box flexDirection="row" gap={2}>
+          <text fg={modeColor} attributes={TextAttributes.BOLD}>
+            {mode.label}
+          </text>
+          <text fg="#CCC" attributes={TextAttributes.DIM}>
+            {MODEL}
+          </text>
+        </box>
+        <text fg="#AAA" attributes={TextAttributes.DIM}>
+          Enter send · Shift+Enter newline
+        </text>
+      </box>
     </box>
   )
 }

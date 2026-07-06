@@ -8,6 +8,7 @@ import { client } from '../lib/client'
 import { useAgentLoop } from '../lib/use-agent-loop'
 import { useModeContext } from '../lib/modes'
 import { ChatShell } from '../components/chat/ChatShell'
+import { CodingAgent, DEFAULT_MODE } from '@brocode/ai/client'
 
 const ChatRouteState = z.object({
   prompt: z.string().default(''),
@@ -85,6 +86,14 @@ function AiChatInner({
   const sentRef = useRef(false)
   const { mode } = useModeContext()
 
+  // 使用 useRef 保持 agent 引用稳定，避免模式切换时重建
+  const agentRef = useRef(new CodingAgent(DEFAULT_MODE))
+
+  // 模式切换时，只更新 agent 的状态，不重建对象
+  useEffect(() => {
+    agentRef.current.setMode(mode)
+  }, [mode])
+
   const {
     messages,
     status,
@@ -94,7 +103,7 @@ function AiChatInner({
     confirm,
     deny,
     stop,
-  } = useAgentLoop({ sessionId, initialMessages, mode: mode.id })
+  } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current })
 
   const handleEsc = useCallback(
     (event: KeyEvent) => {

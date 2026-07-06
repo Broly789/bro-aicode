@@ -1,4 +1,5 @@
 import { MODES, DEFAULT_MODE } from './modes'
+import type { ModeIds } from './modes'
 
 const baseInstructions =
   'You are a CLI coding assistant. Rules:\n' +
@@ -14,7 +15,7 @@ const baseInstructions =
   '7. If search() fails, try rephrasing the query (max 3 attempts), then answer from training data.\n' +
   '8. Chinese queries: search results from baidu are more reliable for Chinese content.\n'
 
-const modeInstructions: Record<string, string> = {
+const modeInstructions: Record<ModeIds, string> = {
   build:
     '\n## Mode: BUILD\n' +
     'You have full tool access — read, write, edit, and execute.\n' +
@@ -32,7 +33,7 @@ const modeInstructions: Record<string, string> = {
  * BUILD: 全工具访问，可读写执行。
  * PLAN: 只读分析/规划，禁止写操作。
  */
-export function getSystemInstructions(modeId?: string): string {
+export function getSystemInstructions(modeId?: ModeIds): string {
   const mode = MODES.find((m) => m.id === modeId) ?? DEFAULT_MODE
   const extra = modeInstructions[mode.id] ?? ''
   return baseInstructions + extra

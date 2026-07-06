@@ -101,8 +101,8 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
   switch (state) {
     case 'input-streaming':
       return (
-        <text attributes={TextAttributes.DIM}>
-          [{String(name)}] gathering input...
+        <text fg="#666" attributes={TextAttributes.DIM}>
+          ⏳ {String(name)} gathering input...
         </text>
       )
     case 'input-available':
@@ -114,40 +114,50 @@ function ToolCallPart({ part }: { part: AnyToolPart }) {
       )
     case 'executing':
       return (
-        <text fg="#ffa500" attributes={TextAttributes.BOLD}>
+        <text fg="#FFA500" attributes={TextAttributes.BOLD}>
           ⚡ {String(name)}
           {summary ? ` ${summary}` : ''}
         </text>
       )
     case 'approval-requested':
-      return <text fg="yellow">[{String(name)}] needs approval</text>
+      return (
+        <text fg="#FFD700" attributes={TextAttributes.BOLD}>
+          ? {String(name)} needs approval
+        </text>
+      )
     case 'approval-responded':
       return part.approval?.approved ? (
-        <text attributes={TextAttributes.DIM}>[{String(name)}] approved</text>
+        <text fg="#00FF00" attributes={TextAttributes.DIM}>
+          ✓ {String(name)} approved
+        </text>
       ) : (
-        <text fg="yellow">
-          [{String(name)}] denied
+        <text fg="#FF6B6B">
+          ✗ {String(name)} denied
           {part.approval?.reason ? `: ${String(part.approval.reason)}` : ''}
         </text>
       )
     case 'output-available':
       return (
-        <text attributes={TextAttributes.DIM} fg="#6a6">
+        <text fg="#00FF00" attributes={TextAttributes.DIM}>
           ✓ {String(name)}
           {searchSource ? ` (${String(searchSource)})` : ''}
         </text>
       )
     case 'output-error':
       return (
-        <text fg="red">
+        <text fg="#FF6B6B">
           ✗ {String(name)}: {String(part.errorText ?? 'unknown')}
         </text>
       )
     case 'output-denied':
-      return <text fg="yellow">[{String(name)}] denied</text>
+      return (
+        <text fg="#FFD700">
+          ✗ {String(name)} denied
+        </text>
+      )
     default:
       return (
-        <text attributes={TextAttributes.DIM}>
+        <text fg="#666" attributes={TextAttributes.DIM}>
           [{String(name)}] {String((part as AnyToolPart).state)}
         </text>
       )
@@ -161,9 +171,16 @@ type ChatMessageProps = {
 export function ChatMessage({ msg }: ChatMessageProps) {
   if (msg.role === 'user') {
     return (
-      <box flexDirection="column" marginBottom={1}>
-        <text fg="#7ec8e3">
-          {'> '}
+      <box flexDirection="column" marginBottom={1} paddingLeft={1}>
+        <box flexDirection="row" gap={1} marginBottom={0}>
+          <text fg="#00FFFF" attributes={TextAttributes.BOLD}>
+            ›
+          </text>
+          <text fg="#00FFFF" attributes={TextAttributes.BOLD}>
+            You
+          </text>
+        </box>
+        <text fg="#E0E0E0" paddingLeft={2} wrapMode="word">
           {textFromMsg(msg)}
         </text>
       </box>
@@ -171,13 +188,13 @@ export function ChatMessage({ msg }: ChatMessageProps) {
   }
 
   return (
-    <box flexDirection="column" marginBottom={1}>
+    <box flexDirection="column" marginBottom={1} paddingLeft={1}>
       {msg.parts.map((part, i) => {
         const el = (() => {
           switch (part.type) {
             case 'text':
               return (
-                <text key={i} wrapMode="word">
+                <text key={i} wrapMode="word" fg="#E0E0E0">
                   {stripHtml(part.text)}
                 </text>
               )
@@ -186,9 +203,10 @@ export function ChatMessage({ msg }: ChatMessageProps) {
                 <text
                   key={i}
                   wrapMode="word"
-                  attributes={TextAttributes.DIM | TextAttributes.ITALIC}
+                  fg="#888"
+                  attributes={TextAttributes.ITALIC}
                 >
-                  {stripHtml(part.text)}
+                  💭 {stripHtml(part.text)}
                 </text>
               )
             case 'step-start':
@@ -196,39 +214,40 @@ export function ChatMessage({ msg }: ChatMessageProps) {
                 <box
                   key={i}
                   height={1}
-                  borderStyle="single"
-                  border={['top']}
-                  borderColor="#222"
-                />
+                  marginTop={1}
+                  marginBottom={1}
+                >
+                  <text fg="#333">{'─'.repeat(40)}</text>
+                </box>
               )
             case 'source-url':
               return (
-                <text key={i} attributes={TextAttributes.DIM}>
-                  source: {part.title ?? part.url}
+                <text key={i} fg="#666" attributes={TextAttributes.DIM}>
+                  🔗 {part.title ?? part.url}
                 </text>
               )
             case 'source-document':
               return (
-                <text key={i} attributes={TextAttributes.DIM}>
-                  doc: {part.title}
+                <text key={i} fg="#666" attributes={TextAttributes.DIM}>
+                  📄 {part.title}
                   {part.filename ? ` (${part.filename})` : ''}
                 </text>
               )
             case 'file':
               return (
-                <text key={i} attributes={TextAttributes.DIM}>
-                  file: {part.filename ?? part.url} ({part.mediaType})
+                <text key={i} fg="#666" attributes={TextAttributes.DIM}>
+                  📁 {part.filename ?? part.url} ({part.mediaType})
                 </text>
               )
             case 'reasoning-file':
               return (
-                <text key={i} attributes={TextAttributes.DIM}>
-                  file ({part.mediaType})
+                <text key={i} fg="#666" attributes={TextAttributes.DIM}>
+                  📁 file ({part.mediaType})
                 </text>
               )
             case 'custom':
               return (
-                <text key={i} attributes={TextAttributes.DIM}>
+                <text key={i} fg="#666" attributes={TextAttributes.DIM}>
                   {part.kind}
                 </text>
               )
@@ -243,7 +262,7 @@ export function ChatMessage({ msg }: ChatMessageProps) {
                 return null
               }
               return (
-                <box key={part.toolCallId} flexDirection="column">
+                <box key={part.toolCallId} flexDirection="column" paddingLeft={1}>
                   <ToolCallPart part={part} />
                 </box>
               )

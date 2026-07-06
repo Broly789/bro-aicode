@@ -11,7 +11,7 @@ import {
   generateId,
 } from 'ai'
 import { deepseek } from '@ai-sdk/deepseek'
-import { allCodingTools, getCodingToolsForMode, getSystemInstructions } from '@brocode/ai/server'
+import { allCodingTools, getCodingToolsForMode, getSystemInstructions, type ModeIds } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
 
@@ -19,7 +19,7 @@ const MODEL = process.env.AI_MODEL ?? 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
-  mode: z.string().optional().default('build'),
+  mode: z.enum(['build', 'plan']).optional().default('build'),
 })
 
 const chatParamSchema = z.object({

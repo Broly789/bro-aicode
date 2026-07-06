@@ -5,10 +5,7 @@ import { useModeContext } from '../lib/modes'
 
 const navItems = [
   { key: 'h', path: '/', label: 'Home' },
-  // { key: 'c', path: '/chat', label: 'Chat' },
-  // { key: 'a', path: '/about', label: 'About' },
   { key: 's', path: '/settings', label: 'Settings' },
-  // { key: 'l', path: '/llm', label: 'LLM' },
 ] as const
 
 export function RootLayout() {
@@ -19,56 +16,73 @@ export function RootLayout() {
 
   useKeyboard((event: KeyEvent) => {
     if (event.name === 'h' && event.shift) navigate('/')
-    // if (event.name === 'c' && event.shift) navigate('/chat')
-    // if (event.name === 'a' && event.shift) navigate('/about')
     if (event.name === 's' && event.shift) navigate('/settings')
-    // if (event.name === 'l' && event.shift) navigate('/llm')
     if (event.name === 'tab') cycleMode()
     if (event.name === 'q' && event.shift) renderer.destroy()
   })
 
   return (
     <box flexDirection="column" flexGrow={1}>
+      {/* Header */}
       <box
         flexDirection="row"
         justifyContent="space-between"
+        alignItems="center"
         paddingLeft={1}
         paddingRight={1}
-        borderStyle="single"
-        border={['bottom']}
+        height={1}
+        backgroundColor="#1a1a2e"
       >
-        <text attributes={TextAttributes.BOLD}>Brocode</text>
-        <text attributes={TextAttributes.DIM}>{location.pathname}</text>
+        <text attributes={TextAttributes.BOLD} fg="#00FFFF">
+          BROCODE
+        </text>
+        <text fg="#666" attributes={TextAttributes.DIM}>
+          {location.pathname === '/' ? 'Home' : location.pathname}
+        </text>
       </box>
 
+      {/* Content */}
       <box flexGrow={1} padding={1}>
         <Outlet />
       </box>
 
+      {/* Footer */}
       <box
         flexDirection="row"
-        justifyContent="center"
-        gap={2}
-        paddingTop={1}
-        paddingBottom={1}
-        borderStyle="single"
-        border={['top']}
+        justifyContent="space-between"
+        alignItems="center"
+        paddingLeft={1}
+        paddingRight={1}
+        height={1}
+        backgroundColor="#1a1a2e"
       >
-        {navItems.map(({ key, path, label }) => (
-          <text
-            key={key}
-            attributes={
-              location.pathname === path
-                ? TextAttributes.BOLD | TextAttributes.UNDERLINE
-                : TextAttributes.NONE
-            }
-          >
-            [S+{key.toUpperCase()}] {label}
+        <box flexDirection="row" gap={2}>
+          {navItems.map(({ key, path, label }) => (
+            <text
+              key={key}
+              fg={location.pathname === path ? '#00FFFF' : '#888'}
+              attributes={
+                location.pathname === path
+                  ? TextAttributes.BOLD
+                  : TextAttributes.NONE
+              }
+            >
+              [S+{key.toUpperCase()}] {label}
+            </text>
+          ))}
+        </box>
+
+        <box flexDirection="row" gap={2}>
+          <text fg="#AAA" attributes={TextAttributes.DIM}>
+            [Tab] Mode
           </text>
-        ))}
-        <text attributes={TextAttributes.DIM}>[Tab] {mode.label}</text>
-        <text attributes={TextAttributes.DIM}>[Esc] Stop</text>
-        <text attributes={TextAttributes.DIM}>[S+Q] Quit</text>
+          <text fg="#AAA" attributes={TextAttributes.DIM}>
+            [Esc] Back
+          </text>
+          <text fg="#AAA" attributes={TextAttributes.DIM}>
+            [S+Q] Quit
+          </text>
+        </box>
       </box>
     </box>
   )

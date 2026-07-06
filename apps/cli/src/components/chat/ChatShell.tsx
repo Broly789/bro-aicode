@@ -38,7 +38,7 @@ export function ChatShell({
     return () => clearInterval(id)
   }, [status])
 
-  const frames = ['思考中', '思考中.', '思考中..', '思考中...']
+  const spinners = ['⠋', '⠙', '⠹', '⠸']
 
   return (
     <box flexDirection="column" flexGrow={1}>
@@ -51,10 +51,12 @@ export function ChatShell({
             justifyContent="center"
           >
             <box flexDirection="column" gap={1} alignItems="center">
-              <text attributes={TextAttributes.BOLD | TextAttributes.DIM}>
-                AI Chat
+              <text fg="#00FFFF" attributes={TextAttributes.BOLD}>
+                Start a conversation
               </text>
-              <text attributes={TextAttributes.DIM}>Ask anything...</text>
+              <text fg="#666" attributes={TextAttributes.DIM}>
+                Type your message below to begin
+              </text>
             </box>
           </box>
         ) : (
@@ -71,24 +73,27 @@ export function ChatShell({
         />
       ) : null}
 
+      {/* Status Bar */}
       <box height={1} paddingLeft={1}>
         {status === 'streaming' ? (
-          <text attributes={TextAttributes.DIM | TextAttributes.ITALIC}>
-            {frames[frame]}
+          <text fg="#00FFFF">
+            {spinners[frame]} Thinking...
           </text>
         ) : status === 'error' ? (
-          <text fg="red" attributes={TextAttributes.DIM}>
-            Failed: {error?.message ?? 'Unknown error'}
+          <text fg="red">
+            ✗ {error?.message ?? 'Unknown error'}
+          </text>
+        ) : status === 'confirming' ? (
+          <text fg="yellow" attributes={TextAttributes.BOLD}>
+            ? Confirm action
           </text>
         ) : null}
       </box>
 
-      <box
-        borderStyle="single"
-        border={['top']}
-        borderColor="#222"
-        height={1}
-      />
+      {/* Separator */}
+      <box height={1}>
+        <text fg="#333">{'─'.repeat(40)}</text>
+      </box>
 
       <ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} />
     </box>
