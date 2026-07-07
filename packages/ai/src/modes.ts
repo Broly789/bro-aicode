@@ -1,4 +1,4 @@
-import type { ToolName } from './tools/schemas'
+import { toolSchemas, type ToolName } from './tools/schemas'
 import type { Tool } from 'ai'
 
 // 模式 ID 字面量联合，杜绝非法 mode 字符串
@@ -47,11 +47,7 @@ export const DEFAULT_MODE = BUILD
  * @param value 待校验字符串
  */
 function isToolName(value: string): value is ToolName {
-  // 提取全部可用工具全集，用于运行时校验
-  const allToolNames: ToolName[] = Array.from(
-    new Set(MODES.flatMap(m => m.allowedTools))
-  )
-  return allToolNames.includes(value as ToolName)
+  return value in toolSchemas
 }
 export function isToolAllowed(toolName: string, mode: Mode): boolean {
   // 第一步：先判断字符串是不是合法工具名，不是直接拒绝

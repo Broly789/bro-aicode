@@ -1,9 +1,11 @@
 import { TextAttributes } from '@opentui/core'
+import { useRenderer } from '@opentui/react'
 import { useLocation, useNavigate } from 'react-router'
 import { z } from 'zod'
 import { AsciiArt } from '../components/AsciiArt'
 import { TextArea } from '../components/TextArea'
 import { client } from '../lib/client'
+import { handleCommand } from '../lib/commands'
 
 const HomeRouteState = z.object({
   sessionExpired: z.boolean().default(false),
@@ -12,10 +14,12 @@ const HomeRouteState = z.object({
 export function Home() {
   const navigate = useNavigate()
   const location = useLocation()
+  const renderer = useRenderer()
 
   const { sessionExpired } = HomeRouteState.parse(location.state ?? {})
 
   const handleSubmit = async (value: string) => {
+    if (await handleCommand(value, navigate, renderer)) return
     const res = await client.api.sessions.$post({})
     const { id } = (await res.json()) as { id: string }
     navigate(`/session/${id}`, { state: { prompt: value } })

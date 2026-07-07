@@ -34,6 +34,46 @@ export type AgentLoopEvent =
   | { type: 'done'; finishReason: string }               // 本轮结束
   | { type: 'error'; message: string }                   // 发生错误
 
+/**
+ * 将消息列表中的 tool parts 从 CLI 内部格式转换为 validateUIMessages 能接受的格式。
+ *
+ * CLI 内部格式（UI 渲染用）：
+ *   { type: "tool-bash", toolCallId, toolName, state: "input-available"|"output-available"|..., input?, output?, errorText? }
+ *
+ * validateUIMessages 格式（AI SDK v7）：
+ *   { type: "dynamic-tool", toolName, toolCallId, state: "input-available"|"output-available"|..., input, output?, errorText? }
+ */
+function normalizeToolParts(messages: UIMessage[]): UIMessage[] {
+  return messages.map((msg) => {
+    if (msg.role !== 'assistant') return msg
+    const hasToolParts = msg.parts.some(
+      (p) => typeof p.type === 'string' && p.type.startsWith('tool-'),
+    )
+    if (!hasToolParts) return msg
+    return {
+      ...msg,
+      parts: msg.parts.map((p) => {
+        if (typeof p.type === 'string' && p.type.startsWith('tool-') && 'toolCallId' in p) {
+          const part = p as Record<string, unknown>
+          const toolName = (p.type as string).slice(5)
+          const state = part.state as string | undefined
+          const result: Record<string, unknown> = {
+            type: 'dynamic-tool',
+            toolName,
+            toolCallId: part.toolCallId,
+            state: state ?? 'input-available',
+            input: part.input ?? {},
+          }
+          if ('output' in part) result.output = part.output
+          if ('errorText' in part) result.errorText = part.errorText
+          return result as UIMessage['parts'][number]
+        }
+        return p
+      }),
+    }
+  })
+}
+
 /** 单轮 sendAndReceive 的返回结果 */
 export type AgentLoopResult = {
   messages: UIMessage[]   // 包含本次新增 assistant 消息的完整消息列表
@@ -127,10 +167,11 @@ export async function sendAndReceive(
 }> {
   let res: Response
   try {
+    const normalized = normalizeToolParts(messages)
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages, mode: agent.modeId }),
+      body: JSON.stringify({ messages: normalized, mode: agent.modeId }),
       signal,
     })
   } catch (err) {
@@ -281,6 +322,7 @@ export async function sendAndReceive(
   if (errorText) throw new Error(errorText)
 
   // ---- 将累积的 StreamPart 转换为标准 UIMessage parts ----
+  // 使用 dynamic-tool 格式，validateUIMessages 要求 input 字段必填
   const assistantParts: UIMessage['parts'] = []
   for (const part of parts) {
     if (part.type === 'text') {
@@ -289,11 +331,12 @@ export async function sendAndReceive(
       assistantParts.push({ type: 'reasoning', text: part.text ?? '', state: 'done' })
     } else if (part.toolName) {
       assistantParts.push({
-        type: `tool-${part.toolName}` as `tool-${string}`,
+        type: 'dynamic-tool',
+        toolName: part.toolName,
         toolCallId: part.toolCallId!,
         state: 'input-available',
-        input: part.input,
-      })
+        input: part.input ?? {},
+      } as unknown as UIMessage['parts'][number])
     }
   }
 
