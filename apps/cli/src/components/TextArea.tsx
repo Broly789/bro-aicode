@@ -1,8 +1,9 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { type TextareaRenderable, type KeyBinding, type KeyEvent, TextAttributes } from '@opentui/core'
 import { useRenderer } from '@opentui/react'
 import { useModeContext } from '../lib/modes'
-import { CommandList, filterCommands, type Command } from './CommandList'
+import { CommandList } from './CommandList'
+import { useCommandPopover } from '../hooks/use-command-popover'
 
 const MODEL = process.env.AI_MODEL ?? 'unknown'
 
@@ -18,103 +19,44 @@ type TextAreaProps = {
   disabled?: boolean
 }
 
+function safeGetText(instance: TextareaRenderable | null): string {
+  if (!instance) return ''
+  try {
+    return instance.plainText
+  } catch {
+    return ''
+  }
+}
+
+function safeSetText(instance: TextareaRenderable | null, text: string) {
+  if (!instance) return
+  try {
+    instance.setText(text)
+  } catch {}
+}
+
 export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
   const textareaRef = useRef<TextareaRenderable>(null)
   const { mode } = useModeContext()
   const renderer = useRenderer()
-
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [filteredCommands, setFilteredCommands] = useState<Command[]>([])
-
-  const isPopoverOpenRef = useRef(false)
-  const disabledRef = useRef(false)
-  const filteredCommandsRef = useRef<Command[]>([])
-  const selectedIndexRef = useRef(0)
-  const onSubmitRef = useRef(onSubmit)
-  const lastQueryRef = useRef('')
-
-  useEffect(() => { isPopoverOpenRef.current = isPopoverOpen }, [isPopoverOpen])
-  useEffect(() => { disabledRef.current = disabled }, [disabled])
-  useEffect(() => { filteredCommandsRef.current = filteredCommands }, [filteredCommands])
-  useEffect(() => { selectedIndexRef.current = selectedIndex }, [selectedIndex])
-  useEffect(() => { onSubmitRef.current = onSubmit }, [onSubmit])
+  const { isOpen, commands, selectedIndex, syncValue, getSelectedCommandName, clear } = useCommandPopover()
 
   useEffect(() => {
     const instance = textareaRef.current
     if (!instance) return
 
     const interval = setInterval(() => {
-      let value: string
-      try {
-        value = instance.plainText
-      } catch {
-        return
-      }
-      if (value.startsWith('/')) {
-        const query = value.slice(1)
-        if (query !== lastQueryRef.current) {
-          lastQueryRef.current = query
-          const filtered = filterCommands(query)
-          setFilteredCommands(filtered)
-          setIsPopoverOpen(filtered.length > 0)
-          setSelectedIndex(0)
-        } else if (!isPopoverOpenRef.current) {
-          const filtered = filterCommands(query)
-          setFilteredCommands(filtered)
-          setIsPopoverOpen(filtered.length > 0)
-        }
-      } else {
-        lastQueryRef.current = ''
-        setIsPopoverOpen(false)
-      }
+      syncValue(safeGetText(instance))
     }, 50)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [syncValue])
 
   useEffect(() => {
     const handler = (key: KeyEvent) => {
-      if (!isPopoverOpenRef.current || disabledRef.current) return
-
-      switch (key.name) {
-        case 'up':
-          key.preventDefault()
-          key.stopPropagation()
-          setSelectedIndex((prev) => {
-            const cmds = filteredCommandsRef.current
-            return prev > 0 ? prev - 1 : cmds.length - 1
-          })
-          return
-        case 'down':
-          key.preventDefault()
-          key.stopPropagation()
-          setSelectedIndex((prev) => {
-            const cmds = filteredCommandsRef.current
-            return prev < cmds.length - 1 ? prev + 1 : 0
-          })
-          return
-        case 'return':
-        case 'enter':
-          key.preventDefault()
-          key.stopPropagation()
-          if (filteredCommandsRef.current.length > 0) {
-            const selected = filteredCommandsRef.current[selectedIndexRef.current]
-            if (selected && onSubmitRef.current) {
-              onSubmitRef.current(selected.name)
-            }
-            textareaRef.current?.setText('')
-            lastQueryRef.current = ''
-            setIsPopoverOpen(false)
-          }
-          return
-        case 'escape':
-          key.preventDefault()
-          key.stopPropagation()
-          lastQueryRef.current = ''
-          setIsPopoverOpen(false)
-          textareaRef.current?.setText('')
-          return
+      if (key.name === 'escape' && !disabled) {
+        safeSetText(textareaRef.current, '')
+        clear()
       }
     }
 
@@ -122,19 +64,27 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
     return () => {
       renderer.keyInput.off('keypress', handler)
     }
-  }, [renderer])
+  }, [renderer, disabled, clear])
 
   const handleSubmit = useCallback(() => {
-    if (disabled || isPopoverOpen) return
-    const instance = textareaRef.current
-    if (!instance) return
+    if (disabled) return
 
-    const content = instance.plainText.trim()
-    if (content && onSubmit) {
-      onSubmit(content)
+    const content = safeGetText(textareaRef.current)
+    if (!content.trim()) return
+
+    const commandName = getSelectedCommandName()
+    if (commandName) {
+      onSubmit?.(commandName)
+      safeSetText(textareaRef.current, '')
+      clear()
+      return
     }
-    instance.setText('')
-  }, [disabled, onSubmit, isPopoverOpen])
+
+    if (isOpen) return
+
+    onSubmit?.(content.trim())
+    safeSetText(textareaRef.current, '')
+  }, [disabled, isOpen, getSelectedCommandName, clear, onSubmit])
 
   useEffect(() => {
     const instance = textareaRef.current
@@ -147,20 +97,14 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
 
   return (
     <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4}>
-      {isPopoverOpen && filteredCommands.length > 0 && (
+      {isOpen && commands.length > 0 && (
         <box position="absolute" bottom={7} left={4} right={4}>
-          <CommandList
-            commands={filteredCommands}
-            selectedIndex={selectedIndex}
-          />
+          <CommandList commands={commands} selectedIndex={selectedIndex} />
         </box>
       )}
 
       <box flexDirection="row">
-        <box
-          width={1}
-          backgroundColor={borderColor}
-        />
+        <box width={1} backgroundColor={borderColor} />
         <box flexGrow={1} backgroundColor="#1a1a2e" paddingLeft={1} paddingRight={1}>
           <textarea
             ref={textareaRef}
