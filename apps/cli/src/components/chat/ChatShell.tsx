@@ -91,8 +91,8 @@ export function ChatShell({
       </box>
 
       {/* Separator */}
-      <box height={1}>
-        <text fg="#333">{'─'.repeat(40)}</text>
+      <box height={1} width="100%">
+        <text fg="#333">{'─'.repeat(100)}</text>
       </box>
 
       <ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} />

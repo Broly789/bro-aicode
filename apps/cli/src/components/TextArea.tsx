@@ -2,6 +2,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import { type TextareaRenderable, type KeyBinding, type KeyEvent, TextAttributes } from '@opentui/core'
 import { useRenderer } from '@opentui/react'
 import { useModeContext } from '../lib/modes'
+import { CHAT_COMMANDS } from '../lib/chat-commands'
 import { CommandList } from './CommandList'
 import { useCommandPopover } from '../hooks/use-command-popover'
 
@@ -32,14 +33,14 @@ function safeSetText(instance: TextareaRenderable | null, text: string) {
   if (!instance) return
   try {
     instance.setText(text)
-  } catch {}
+  } catch { }
 }
 
 export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
   const textareaRef = useRef<TextareaRenderable>(null)
   const { mode } = useModeContext()
   const renderer = useRenderer()
-  const { isOpen, commands, selectedIndex, syncValue, getSelectedCommandName, clear } = useCommandPopover()
+  const { isOpen, commands, selectedIndex, syncValue, getSelectedCommandName, selectIndex, hoverIndex, clear } = useCommandPopover()
 
   useEffect(() => {
     const instance = textareaRef.current
@@ -92,14 +93,31 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
     instance.onSubmit = handleSubmit
   }, [handleSubmit])
 
+  const handleCommandSelect = useCallback(
+    (index: number) => {
+      const cmd = commands[index]
+      if (cmd) {
+        onSubmit?.(cmd.name)
+        safeSetText(textareaRef.current, '')
+        clear()
+      }
+    },
+    [commands, onSubmit, clear],
+  )
+
   const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
   const borderColor = disabled ? '#333' : modeColor
 
   return (
     <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4}>
       {isOpen && commands.length > 0 && (
-        <box position="absolute" bottom={7} left={4} right={4}>
-          <CommandList commands={commands} selectedIndex={selectedIndex} />
+        <box position="absolute" bottom={6} left={4} right={4}>
+          <CommandList
+            commands={commands}
+            selectedIndex={selectedIndex}
+            onSelect={handleCommandSelect}
+            onHover={hoverIndex}
+          />
         </box>
       )}
 

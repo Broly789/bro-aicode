@@ -74,6 +74,14 @@ export function useCommandPopover() {
     return cmd?.name ?? null
   }, [])
 
+  const selectIndex = useCallback((index: number) => {
+    setSelectedIndex(index)
+  }, [])
+
+  const hoverIndex = useCallback((index: number) => {
+    setSelectedIndex(index)
+  }, [])
+
   const clear = useCallback(() => {
     lastQueryRef.current = ''
     setIsOpen(false)
@@ -85,6 +93,8 @@ export function useCommandPopover() {
     selectedIndex,
     syncValue,
     getSelectedCommandName,
+    selectIndex,
+    hoverIndex,
     clear,
   }
 }

@@ -15,8 +15,14 @@ export function ToolConfirm({
   onDeny,
 }: ToolConfirmProps) {
   useKeyboard((event: KeyEvent) => {
-    if (event.name === 'y') onConfirm()
-    if (event.name === 'n') onDeny()
+    if (event.name === 'y') {
+      event.preventDefault()
+      onConfirm()
+    }
+    if (event.name === 'n') {
+      event.preventDefault()
+      onDeny()
+    }
   })
 
   const inputEntries = Object.entries((input ?? {}) as Record<string, unknown>)
