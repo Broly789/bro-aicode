@@ -5,6 +5,7 @@ import { useModeContext } from '../lib/modes'
 import { CHAT_COMMANDS } from '../lib/chat-commands'
 import { CommandList } from './CommandList'
 import { useCommandPopover } from '../hooks/use-command-popover'
+import { EmptyBorder } from './border'
 
 const MODEL = process.env.AI_MODEL ?? 'unknown'
 
@@ -121,17 +122,28 @@ export function TextArea({ onSubmit, disabled = false }: TextAreaProps) {
         </box>
       )}
 
-      <box flexDirection="row">
-        <box width={1} backgroundColor={borderColor} />
-        <box flexGrow={1} backgroundColor="#1a1a2e" paddingLeft={1} paddingRight={1}>
+      <box flexDirection="row" flexGrow={1}>
+        <box
+          width={1}
+          flexShrink={0}
+          backgroundColor={borderColor}
+        />
+        {/* <box border={["left"]} borderColor={borderColor} customBorderChars={{
+        ...EmptyBorder,
+        vertical: "┃",
+        bottomLeft: "╹",
+      }} flexGrow={1} > */}
+        <box flexGrow={1}>
           <textarea
             ref={textareaRef}
             placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
             keyBindings={TEXTAREA_KEY_BINDINGS}
-            width="100%"
+            paddingRight={1} paddingLeft={1}
             height={5}
+            width={"100%"}
             wrapMode="word"
             focused={!disabled}
+            backgroundColor="#122215"
           />
         </box>
       </box>

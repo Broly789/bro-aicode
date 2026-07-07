@@ -16,7 +16,7 @@ interface CommandItem {
 }
 
 // 系统内置指令：只可手动输入执行，不会出现在下拉弹窗列表
-type SystemCommandName = '/new' | '/exit' | '/agents' | '/connect' | '/editor' | '/mcps' | '/models' | '/move';
+type SystemCommandName = '/new' | '/exit' | '/agents' | '/connect' | '/editor' | '/mcps' | '/models' | '/move' | '/sessions';
 const systemCommandMap: Readonly<Record<SystemCommandName, CommandItem>> = {
   '/new': {
     description: 'Start a new session',
@@ -67,6 +67,10 @@ const systemCommandMap: Readonly<Record<SystemCommandName, CommandItem>> = {
     description: 'Move the session to another project directory',
     action: () => undefined,
   },
+  '/sessions': {
+    description: 'Open sessions dialog',
+    action: () => undefined,
+  },
 };
 
 // 弹窗展示命令：从chat-commands自动生成，仅用于下拉建议
@@ -91,27 +95,36 @@ export const POPOVER_COMMAND_LIST: readonly ChatCommand[] = CHAT_COMMANDS;
 // 命令执行返回类型
 export type CommandResult = string | boolean;
 
+export type CommandActions = {
+  openDialog?: (title?: string) => void
+};
+
 /**
  * 统一命令入口处理
  * @param value 输入框原始文本
  * @param navigate 路由跳转
  * @param renderer OpenTUI 渲染实例
+ * @param actions 额外动作（如打开弹窗）
  * @returns false非命令 / string回填文本 / true执行完毕
  */
 export async function handleCommand(
   value: string,
   navigate: NavigateFunction,
   renderer: CliRenderer,
+  actions?: CommandActions,
 ): Promise<CommandResult> {
   if (!value.startsWith('/')) return false;
 
   const inputCmd = value.trim() as AllCommandName;
-  // 类型守卫：判断是否存在于总命令键内
   if (!(inputCmd in ALL_COMMANDS)) return false;
 
   const targetCommand = ALL_COMMANDS[inputCmd];
-  const executeRes = await targetCommand.action(navigate, renderer);
 
-  // 有字符串则回填，无则标记执行成功
+  if (inputCmd === '/sessions') {
+    actions?.openDialog?.('Sessions')
+    return true
+  }
+
+  const executeRes = await targetCommand.action(navigate, renderer);
   return executeRes ?? true;
 }

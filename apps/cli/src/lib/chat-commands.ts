@@ -3,7 +3,7 @@ export type ChatCommand = Readonly<{
   description: string
 }>
 
-const commandDefs = [
+const commandDefs: ChatCommand[] = [
   { name: '/fix', description: 'Fix the issue in the current code' },
   { name: '/explain', description: 'Explain how the current implementation works' },
   { name: '/review', description: 'Review the current changes for bugs and regressions' },
@@ -56,7 +56,18 @@ const commandDefs = [
   { name: '/optimize', description: 'Optimize the code' },
   { name: '/simplify', description: 'Simplify the code' },
   { name: '/modernize', description: 'Modernize the codebase' },
-] as const satisfies readonly ChatCommand[];
+  { name: '/sessions', description: 'Open sessions dialog' },
+]
 
-export type ChatCommandName = (typeof commandDefs)[number]['name'];
-export const CHAT_COMMANDS = commandDefs;
+export type ChatCommandName =
+  | '/fix' | '/explain' | '/review' | '/test' | '/build' | '/typecheck'
+  | '/refactor' | '/debug' | '/deploy' | '/audit' | '/help' | '/lint'
+  | '/format' | '/clean' | '/deps' | '/security' | '/perf' | '/docs'
+  | '/init' | '/migrate' | '/seed' | '/reset' | '/status' | '/logs'
+  | '/monitor' | '/backup' | '/restore' | '/update' | '/upgrade' | '/rollback'
+  | '/cache' | '/flush' | '/sync' | '/pull' | '/push' | '/merge' | '/rebase'
+  | '/cherry-pick' | '/stash' | '/pop' | '/diff' | '/log' | '/blame'
+  | '/hotspot' | '/coverage' | '/benchmark' | '/profile' | '/analyze'
+  | '/suggest' | '/optimize' | '/simplify' | '/modernize' | '/sessions'
+
+export const CHAT_COMMANDS = commandDefs
