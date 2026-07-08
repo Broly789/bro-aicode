@@ -21,6 +21,7 @@ type DialogSearchListProps<T> = {
   placeholder?: string
   emptyText?: string
   maxVisibleOptions?: number
+  resetKey?: number
 }
 
 export function DialogSearchList<T>({
@@ -33,11 +34,24 @@ export function DialogSearchList<T>({
   placeholder = 'Search',
   emptyText = 'No results',
   maxVisibleOptions = MAX_VISIBLE_ITEMS,
+  resetKey,
 }: DialogSearchListProps<T>) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [searchValue, setSearchValue] = useState('')
   const inputRef = useRef<InputRenderable>(null)
   const scrollRef = useRef<ScrollBoxRenderable>(null)
+  const selectedIndexRef = useRef(0)
+  const filteredRef = useRef<T[]>(items)
+  const prevResetKey = useRef(resetKey)
+
+  // resetKey 变化时同步重置状态（渲染阶段，不等 effect）
+  if (resetKey !== undefined && resetKey !== prevResetKey.current) {
+    prevResetKey.current = resetKey
+    setSelectedIndex(0)
+    selectedIndexRef.current = 0
+    setSearchValue('')
+    if (inputRef.current) inputRef.current.value = ''
+  }
 
   useEffect(() => {
     scrollRef.current?.scrollChildIntoView(`opt-${selectedIndex}`)
@@ -47,23 +61,32 @@ export function DialogSearchList<T>({
     const text = inputRef.current?.value ?? ''
     setSearchValue(text)
     setSelectedIndex(0)
+    selectedIndexRef.current = 0
   }, [])
 
   const filtered = searchValue
     ? items.filter((item) => filterFn(item, searchValue))
     : items
 
+  filteredRef.current = filtered
+  selectedIndexRef.current = selectedIndex
+
   const needsScroll = filtered.length > maxVisibleOptions
 
   useKeyboard((key) => {
+    const currentFiltered = filteredRef.current
+    const currentSelectedIndex = selectedIndexRef.current
     if (key.name === 'return' || key.name === 'enter') {
-      const item = filtered[selectedIndex]
-      logger('ai2', `Selecting session22 ${item}`)
+      const item = currentFiltered[currentSelectedIndex]
       if (item) onSelect(item)
     } else if (key.name === 'up') {
-      setSelectedIndex((i) => Math.max(0, i - 1))
+      const next = Math.max(0, currentSelectedIndex - 1)
+      setSelectedIndex(next)
+      selectedIndexRef.current = next
     } else if (key.name === 'down') {
-      setSelectedIndex((i) => Math.min(filtered.length - 1, i + 1))
+      const next = Math.min(currentFiltered.length - 1, currentSelectedIndex + 1)
+      setSelectedIndex(next)
+      selectedIndexRef.current = next
     }
   })
 

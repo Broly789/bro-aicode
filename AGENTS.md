@@ -141,6 +141,105 @@ Root `package.json` uses **two different patterns** for invoking workspace scrip
 
 **Why?** OpenTUI is a full-screen TUI framework that requires raw terminal mode. `bun run --filter` wraps the process in a way that can interfere with terminal raw mode / stdin handling. `--cwd` runs the command directly in the package directory, preserving proper TTY attachment for TUI rendering. For Hono (HTTP server), `--filter` works fine since it doesn't need terminal interaction. If migrating CLI to `--filter`, verify that terminal mode isn't broken. The `dev` script's `&` concurrent runner depends on script name strings, not flags.
 
+## Console Overlay (调试日志面板)
+
+OpenTUI 内置 Console Overlay，捕获所有 `console.*` 输出并显示在终端面板里。
+
+### 快捷键
+
+| 快捷键 | 功能 |
+|--------|------|
+| `Ctrl+`` ` | 开关 console 面板 |
+| `Ctrl+L` | 清空面板日志 |
+| `+` / `-` | 面板内调整大小（面板需获得焦点） |
+| 方向键 | 面板内滚动日志 |
+
+### 配置
+
+`apps/cli/src/index.tsx`:
+```ts
+import { createCliRenderer, ConsolePosition } from '@opentui/core'
+
+const renderer = await createCliRenderer({
+  consoleOptions: {
+    position: ConsolePosition.BOTTOM,  // TOP / BOTTOM / LEFT / RIGHT
+    sizePercent: 30,                    // 占终端百分比
+  },
+})
+```
+
+面板默认隐藏，按 `Ctrl+`` ` 打开。
+
+### 环境变量
+
+| 变量 | 作用 |
+|------|------|
+| `SHOW_CONSOLE=true` | 启动时自动打开面板（默认关闭） |
+| `OTUI_USE_CONSOLE=false` | 完全禁用 console 捕获 |
+
+---
+
+## Logger 用法
+
+`packages/ai/src/lib/logger.ts` 提供通用日志模块，支持全局调用（无需 import）。
+
+### 签名
+
+```ts
+// 2 参数：日志文件名 + 消息
+logger(module: string, msg: unknown): void
+
+// 3 参数：日志文件名 + 标记名 + 实体对象
+logger(module: string, tag: string, entity?: unknown): void
+```
+
+- `module` — 日志文件名，写入 `logs/{module}.log`（如 `'search'` → `logs/search.log`）
+- `tag` — 标记名，标注当前操作（如 `'fetch'`、`'open'`）
+- `entity` — 实体对象，自动 JSON 序列化
+
+### 示例
+
+```ts
+// 简单文本 → logs/search.log
+logger('search', 'Trying baidu...')
+
+// 带标记名 + 对象
+logger('search', 'fetch', { url: 'https://...', status: 200 })
+logger('session', 'open', { id: '123', title: 'test' })
+logger('ai', item.id, item)
+
+// 不同模块写入不同文件
+logger('agent', 'Tool call received')    // → logs/agent.log
+logger('db', 'Connection established')   // → logs/db.log
+```
+
+### 输出格式
+
+```
+[2026/07/08 15:30:45] [search] fetch { "url": "...", "status": 200 }
+[2026/07/08 15:30:45] [session] open { "id": "123", "title": "test" }
+```
+
+### 文件日志
+
+设置 `SEARCH_LOG=true` 同时写入 `logs/{module}.log`。
+
+```bash
+tail -f logs/search.log     # 实时监控
+tail -20 logs/search.log    # 最近 20 条
+grep "baidu" logs/search.log # 按引擎过滤
+> logs/search.log            # 清空日志
+```
+
+### 关键文件
+
+| 文件 | 用途 |
+|------|------|
+| `packages/ai/src/lib/logger.ts` | logger 实现，写文件 + console.log（面板显示） |
+| `packages/ai/src/global.d.ts` | `globalThis.logger` 类型声明 |
+
+---
+
 ## CLI Routing
 
 `@brocode/cli` uses `react-router` v8 with `createMemoryRouter` (no browser URL since this is a TUI).
@@ -339,48 +438,12 @@ SCRAPER_URL_GOOGLE="https://www.google.com/search?q={q}&hl=zh-CN"
 Search calls are logged to `logs/search.log` via the shared `logger` module (`packages/ai/src/lib/logger.ts`):
 
 ```
-[2026-07-03T07:30:44.089Z] [search] START query="周杰伦" priority="auto" baiduKey=YES tavilyKey=YES
-[2026-07-03T07:30:44.090Z] [search] Trying baidu...
-[2026-07-03T07:30:45.957Z] [search] SUCCESS via baidu, contentLength=11722
+[2026/07/08 15:30:44] [search] fetch { "query": "周杰伦", "priority": "auto" }
+[2026/07/08 15:30:44] [search] Trying baidu...
+[2026/07/08 15:30:45] [search] SUCCESS via baidu, contentLength=11722
 ```
 
-**Logger usage** (any module can use it):
-```ts
-import { logger } from '@brocode/ai'
-
-logger('search', 'Trying baidu...')
-logger('agent', 'Tool call received')
-logger('db', 'Connection established')
-// → logs/search.log, logs/agent.log, logs/db.log
-```
-
-Set `SEARCH_LOG=true` in `.env.local` to enable file logging. `console.error` always outputs regardless of the开关.
-
-### Debugging
-
-Since OpenTUI captures stdout/stderr, `console.log` won't be visible in the terminal. All search logs go to `logs/search.log` instead.
-
-**Monitor search in real-time** (run in a separate terminal):
-```bash
-tail -f logs/search.log
-```
-
-**Check recent searches:**
-```bash
-tail -20 logs/search.log
-```
-
-**Filter by engine:**
-```bash
-grep "baidu" logs/search.log
-grep "tavily" logs/search.log
-grep "scraper" logs/search.log
-```
-
-**Clear logs:**
-```bash
-> logs/search.log
-```
+Logger 用法见上方 [Logger 用法](#logger-用法) 章节。
 
 ### Key files
 

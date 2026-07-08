@@ -11,13 +11,19 @@ const LOG_ENABLED = (process.env.SEARCH_LOG || '').toLowerCase() === 'true'
  *
  * 用法（全局函数，无需 import）：
  *   logger('search', 'Trying baidu...')
- *   logger('session', { id: '123', title: 'test' })
+ *   logger('search', 'fetch', { url: '...', status: 200 })
+ *   logger('session', 'open', { id: '123', title: 'test' })
  *
  * 日志写入 logs/{module}.log，需设置 SEARCH_LOG=true 开启文件写入。
- * console.error 始终输出，不受开关控制。
+ * 同时通过 console.log 输出到 OpenTUI Console Overlay（SHOW_CONSOLE=true 或按 Ctrl+` 键打开）。
  */
-export function logger(module: string, msg: unknown) {
-  const text = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2)
+export function logger(module: string, tag: string, entity?: unknown): void
+export function logger(module: string, msg: unknown): void
+export function logger(module: string, tagOrMsg: unknown, entity?: unknown) {
+  const hasEntity = entity !== undefined
+  const text = hasEntity
+    ? `${tagOrMsg} ${typeof entity === 'string' ? entity : JSON.stringify(entity, null, 2)}`
+    : typeof tagOrMsg === 'string' ? tagOrMsg : JSON.stringify(tagOrMsg, null, 2)
   const now = new Date().toLocaleString('zh-CN', {
     timeZone: 'Asia/Shanghai',
     year: 'numeric',
@@ -33,7 +39,7 @@ export function logger(module: string, msg: unknown) {
     const logFile = join(LOG_DIR, `${module}.log`)
     try { appendFileSync(logFile, line) } catch {}
   }
-  console.error(line.trimEnd())
+  console.log(line.trimEnd())
 }
 
 globalThis.logger = logger

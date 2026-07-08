@@ -22,7 +22,6 @@ const commandDefs: ChatCommand[] = [
   { name: '/security', description: 'Run security audit' },
   { name: '/perf', description: 'Analyze performance' },
   { name: '/docs', description: 'Generate documentation' },
-  { name: '/init', description: 'Initialize a new project' },
   { name: '/migrate', description: 'Run database migrations' },
   { name: '/seed', description: 'Seed the database' },
   { name: '/reset', description: 'Reset the application state' },

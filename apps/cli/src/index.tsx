@@ -1,20 +1,23 @@
-import { appendFileSync } from 'fs'
-import { createCliRenderer } from '@opentui/core'
+import { createCliRenderer, ConsolePosition } from '@opentui/core'
 import { createRoot } from '@opentui/react'
 import { App } from './App'
 
-const LOG = '/tmp/brocode-debug.log'
-
-// @ts-expect-error - global debug logging
-globalThis.__opencodeDebug = (...args: unknown[]) => {
-  try {
-    appendFileSync(LOG, args.map(a => typeof a === 'string' ? a : JSON.stringify(a, null, 2)).join(' ') + '\n')
-    process.stderr.write('[opencode] ' + args[0] + '\n')
-  } catch {}
-}
-
-const renderer = await createCliRenderer()
+const renderer = await createCliRenderer({
+  consoleOptions: {
+    position: ConsolePosition.BOTTOM,
+    sizePercent: 30,
+  },
+})
 createRoot(renderer).render(<App />)
+
+renderer.keyInput.on('keypress', (key) => {
+  if (key.ctrl && key.name === '`') {
+    renderer.console.toggle()
+  }
+  if (key.ctrl && key.name === 'l') {
+    renderer.console.clear()
+  }
+})
 
 const cleanup = () => renderer.destroy()
 process.on('SIGINT', cleanup)

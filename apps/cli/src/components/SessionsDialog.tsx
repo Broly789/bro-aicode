@@ -30,7 +30,6 @@ export function SessionsDialog() {
   const { sessions } = useSessions()
   const openCount = useRef(0)
 
-  // 每次打开时递增计数器，作为 key 强制 DialogSearchList 重建（重置 selectedIndex/searchValue）
   if (isOpen) openCount.current++
 
   useEffect(() => {
@@ -40,7 +39,7 @@ export function SessionsDialog() {
   const selectSession = useCallback(
     (item: SessionItem) => {
       navigate(`/session/${item.id}`)
-      logger('ai', `Opening session ${item.id}`)
+      logger('ai', item.id, item)
       setTimeout(() => close(), 0)
     },
     [navigate, close],
@@ -79,7 +78,7 @@ export function SessionsDialog() {
     <DialogOverlay>
       <Dialog title="Sessions" maxWidth={75}>
         <DialogSearchList
-          key={openCount.current}
+          resetKey={openCount.current}
           items={sessions}
           onSelect={selectSession}
           filterFn={filterFn}
