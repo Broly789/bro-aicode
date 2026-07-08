@@ -2,11 +2,11 @@ import { useDialog } from './dialog'
 import { SearchListDialog, type SearchOption } from './search-list-dialog'
 
 const DUMMY_SESSIONS: SearchOption[] = [
-  { id: '1', label: 'Build AI agent with Vercel SDK' },
-  { id: '2', label: 'Debug database connection pool' },
-  { id: '3', label: 'Refactor chat message rendering' },
-  { id: '4', label: 'Add search tool integration' },
-  { id: '5', label: 'Design system components' },
+  { id: '1', label: 'Build AI agent', description: 'Vercel SDK integration' },
+  { id: '2', label: 'Debug database', description: 'Connection pool issue' },
+  { id: '3', label: 'Refactor rendering', description: 'Chat message components' },
+  { id: '4', label: 'Search tool', description: 'API integration' },
+  { id: '5', label: 'Design system', description: 'Component library' },
 ]
 
 export function SessionsDialog() {

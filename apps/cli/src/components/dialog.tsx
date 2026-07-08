@@ -93,9 +93,7 @@ export function DialogOverlay({ children }: DialogOverlayProps) {
       zIndex={100}
       onMouseDown={close}
     >
-      <box onMouseDown={(e: unknown) => e}>
-        {children}
-      </box>
+      <box onMouseDown={(e: unknown) => e}>{children}</box>
     </box>
   )
 }
@@ -108,7 +106,7 @@ type DialogProps = {
   children?: ReactNode
 }
 
-export function Dialog({ title, maxWidth = 60, children }: DialogProps) {
+export function Dialog({ title, maxWidth = 160, children }: DialogProps) {
   const { title: ctxTitle } = useDialog()
   const displayTitle = title ?? ctxTitle ?? 'Dialog'
 
@@ -127,6 +125,7 @@ export function Dialog({ title, maxWidth = 60, children }: DialogProps) {
         height={1}
         paddingLeft={1}
         paddingRight={1}
+        marginBottom={1}
       >
         <text fg="#FFFFFF" attributes={TextAttributes.BOLD}>
           {displayTitle}
@@ -143,8 +142,6 @@ export function Dialog({ title, maxWidth = 60, children }: DialogProps) {
         paddingLeft={1}
         paddingRight={1}
         paddingBottom={1}
-        alignItems="center"
-        justifyContent="center"
       >
         {children ?? (
           <text fg="#555" attributes={TextAttributes.DIM}>

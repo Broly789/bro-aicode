@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useRef, useState, useEffect, type ReactNode } from 'react'
 import {
   TextAttributes,
   type InputRenderable,
@@ -39,52 +39,35 @@ export function DialogSearchList<T>({
   const inputRef = useRef<InputRenderable>(null)
   const scrollRef = useRef<ScrollBoxRenderable>(null)
 
+  useEffect(() => {
+    scrollRef.current?.scrollChildIntoView(`opt-${selectedIndex}`)
+  }, [selectedIndex])
+
   const handleInput = useCallback(() => {
     const text = inputRef.current?.value ?? ''
     setSearchValue(text)
     setSelectedIndex(0)
-    scrollRef.current?.scrollTo(0)
   }, [])
 
   const filtered = searchValue
     ? items.filter((item) => filterFn(item, searchValue))
     : items
 
-  const visibleHeight = Math.min(filtered.length, maxVisibleOptions)
+  const needsScroll = filtered.length > maxVisibleOptions
 
   useKeyboard((key) => {
     if (key.name === 'return' || key.name === 'enter') {
       const item = filtered[selectedIndex]
       if (item) onSelect(item)
     } else if (key.name === 'up') {
-      setSelectedIndex((i) => {
-        const newIndex = Math.max(0, i - 1)
-        const sb = scrollRef.current
-        if (sb && newIndex < sb.scrollTop) sb.scrollTo(newIndex)
-        const item = filtered[newIndex]
-        if (item && onHighlight) onHighlight(item)
-        return newIndex
-      })
+      setSelectedIndex((i) => Math.max(0, i - 1))
     } else if (key.name === 'down') {
-      setSelectedIndex((i) => {
-        const newIndex = Math.min(filtered.length - 1, i + 1)
-        const sb = scrollRef.current
-        if (sb) {
-          const vpHeight = sb.viewport.height
-          const visibleEnd = sb.scrollTop + vpHeight - 1
-          if (newIndex > visibleEnd) {
-            sb.scrollTo(newIndex - vpHeight + 1)
-          }
-        }
-        const item = filtered[newIndex]
-        if (item && onHighlight) onHighlight(item)
-        return newIndex
-      })
+      setSelectedIndex((i) => Math.min(filtered.length - 1, i + 1))
     }
   })
 
   return (
-    <box flexDirection="column" gap={1}>
+    <box flexDirection="column" gap={1} width="100%">
       <input
         ref={inputRef}
         placeholder={placeholder}
@@ -93,29 +76,75 @@ export function DialogSearchList<T>({
       />
       {filtered.length === 0 ? (
         <text attributes={TextAttributes.DIM}>{emptyText}</text>
-      ) : (
-        <scrollbox ref={scrollRef} height={visibleHeight || 1}>
-          {filtered.map((item, i) => {
-            const isSelected = i === selectedIndex
-            return (
-              <box
-                key={getKey(item)}
-                flexDirection="row"
-                height={1}
-                overflow="hidden"
-                backgroundColor={isSelected ? '#1a3a5c' : undefined}
-                onMouseMove={() => {
-                  setSelectedIndex(i)
-                  if (onHighlight) onHighlight(item)
-                }}
-                onMouseDown={() => onSelect(item)}
-              >
-                {renderItem(item, isSelected)}
-              </box>
-            )
-          })}
+      ) : needsScroll ? (
+        <scrollbox
+          ref={scrollRef}
+          width="100%"
+          height={maxVisibleOptions}
+          flexDirection="column"
+          backgroundColor="#1a1a2e"
+        >
+          {filtered.map((item, i) => (
+            <OptionRow
+              key={getKey(item)}
+              id={`opt-${i}`}
+              isSelected={i === selectedIndex}
+              onMouseDown={() => onSelect(item)}
+              onMouseOver={() => {
+                setSelectedIndex(i)
+                if (onHighlight) onHighlight(item)
+              }}
+            >
+              {renderItem(item, i === selectedIndex)}
+            </OptionRow>
+          ))}
         </scrollbox>
+      ) : (
+        <box width="100%" flexDirection="column" backgroundColor="#1a1a2e">
+          {filtered.map((item, i) => (
+            <OptionRow
+              key={getKey(item)}
+              id={`opt-${i}`}
+              isSelected={i === selectedIndex}
+              onMouseDown={() => onSelect(item)}
+              onMouseOver={() => {
+                setSelectedIndex(i)
+                if (onHighlight) onHighlight(item)
+              }}
+            >
+              {renderItem(item, i === selectedIndex)}
+            </OptionRow>
+          ))}
+        </box>
       )}
+    </box>
+  )
+}
+
+function OptionRow({
+  id,
+  isSelected,
+  onMouseDown,
+  onMouseOver,
+  children,
+}: {
+  id: string
+  isSelected: boolean
+  onMouseDown: () => void
+  onMouseOver: () => void
+  children: ReactNode
+}) {
+  return (
+    <box
+      id={id}
+      height={1}
+      backgroundColor={isSelected ? '#00FFFF' : undefined}
+      onMouseDown={onMouseDown}
+      onMouseOver={onMouseOver}
+    >
+      <box flexDirection="row" gap={2} paddingLeft={1} paddingRight={1}>
+        {children}
+      </box>
     </box>
   )
 }
@@ -125,6 +154,7 @@ export function DialogSearchList<T>({
 export type SearchOption = {
   id: string
   label: string
+  description?: string
 }
 
 type SearchListDialogProps = {
@@ -151,7 +181,25 @@ export function SearchListDialog({
   )
 
   const defaultRender = useCallback(
-    (item: SearchOption) => <text>{item.label}</text>,
+    (item: SearchOption, isSelected: boolean) => (
+      <>
+        <text
+          fg={isSelected ? '#1a1a2e' : '#00FFFF'}
+          attributes={isSelected ? TextAttributes.BOLD : undefined}
+        >
+          {item.label}
+        </text>
+        {item.description && (
+          <text
+            fg={isSelected ? '#1a1a2e' : '#888'}
+            attributes={TextAttributes.DIM}
+          >
+            {' '}
+            {item.description}
+          </text>
+        )}
+      </>
+    ),
     [],
   )
 
