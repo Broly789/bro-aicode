@@ -58,6 +58,7 @@ export function DialogSearchList<T>({
   useKeyboard((key) => {
     if (key.name === 'return' || key.name === 'enter') {
       const item = filtered[selectedIndex]
+      logger('ai2', `Selecting session22 ${item}`)
       if (item) onSelect(item)
     } else if (key.name === 'up') {
       setSelectedIndex((i) => Math.max(0, i - 1))

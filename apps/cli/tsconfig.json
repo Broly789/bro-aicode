@@ -5,5 +5,5 @@
     "module": "Preserve",
     "moduleResolution": "bundler"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "../../packages/ai/src/global.d.ts"]
 }
