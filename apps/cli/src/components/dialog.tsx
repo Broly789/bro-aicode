@@ -62,6 +62,23 @@ type DialogOverlayProps = {
 export function DialogOverlay({ children }: DialogOverlayProps) {
   const { close } = useDialog()
 
+  useKeyboard((event: KeyEvent) => {
+    if (
+      event.name === 'tab' ||
+      ((event.name === 'h' || event.name === 's' || event.name === 'q') &&
+        event.shift)
+    ) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    if (event.name === 'escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      close()
+    }
+  })
+
   return (
     <box
       position="absolute"
@@ -74,9 +91,11 @@ export function DialogOverlay({ children }: DialogOverlayProps) {
       justifyContent="center"
       alignItems="center"
       zIndex={100}
-      onClick={close}
+      onMouseDown={close}
     >
-      <box onClick={(e: unknown) => e}>{children}</box>
+      <box onMouseDown={(e: unknown) => e}>
+        {children}
+      </box>
     </box>
   )
 }
@@ -85,28 +104,20 @@ export function DialogOverlay({ children }: DialogOverlayProps) {
 
 type DialogProps = {
   title?: string
-  width?: number
+  maxWidth?: number
   children?: ReactNode
 }
 
-export function Dialog({ title, width = 60, children }: DialogProps) {
-  const { close, title: ctxTitle } = useDialog()
+export function Dialog({ title, maxWidth = 60, children }: DialogProps) {
+  const { title: ctxTitle } = useDialog()
   const displayTitle = title ?? ctxTitle ?? 'Dialog'
-
-  useKeyboard((event: KeyEvent) => {
-    if (event.name === 'escape') {
-      event.preventDefault()
-      close()
-    }
-  })
 
   return (
     <box
-      width={width}
-      borderStyle="single"
-      borderColor="#444"
+      width={maxWidth}
+      backgroundColor="#141414D9"
       flexDirection="column"
-      onClick={(e: unknown) => e}
+      onMouseDown={(e: unknown) => e}
     >
       {/* Header */}
       <box
@@ -132,6 +143,8 @@ export function Dialog({ title, width = 60, children }: DialogProps) {
         paddingLeft={1}
         paddingRight={1}
         paddingBottom={1}
+        alignItems="center"
+        justifyContent="center"
       >
         {children ?? (
           <text fg="#555" attributes={TextAttributes.DIM}>
