@@ -2,6 +2,29 @@ import { Hono } from 'hono'
 import { prisma } from '../lib/db'
 
 export const sessionsRoute = new Hono()
+  .get('/', async (c) => {
+    const sessions = await prisma.session.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        messages: {
+          orderBy: { createdAt: 'asc' },
+          take: 1,
+          select: { content: true },
+        },
+        _count: { select: { messages: true } },
+      },
+    })
+
+    return c.json({
+      sessions: sessions.map((s) => ({
+        id: s.id,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+        title: s.messages[0]?.content ?? null,
+        messageCount: s._count.messages,
+      })),
+    })
+  })
   .post('/', async (c) => {
     const session = await prisma.session.create({})
     return c.json({ id: session.id }, 201)

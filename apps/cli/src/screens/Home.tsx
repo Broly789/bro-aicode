@@ -2,7 +2,7 @@ import { TextAttributes } from '@opentui/core'
 import { useLocation, useNavigate } from 'react-router'
 import { z } from 'zod'
 import { AsciiArt } from '../components/AsciiArt'
-import { TextArea } from '../components/TextArea'
+import { ChatTextArea } from '../components/chat/ChatTextArea'
 import { client } from '../lib/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
 
@@ -45,22 +45,13 @@ export function Home() {
 
       <box style={{ width: '100%', height: 1 }} />
 
-      <text
-        fg="#888"
-        attributes={TextAttributes.DIM}
-        marginBottom={1}
-      >
+      <text fg="#888" attributes={TextAttributes.DIM} marginBottom={1}>
         AI-powered coding assistant for your terminal
       </text>
 
-      <TextArea onSubmit={handleSubmit} />
+      <ChatTextArea onSubmit={handleSubmit} />
 
-      <box
-        flexDirection="row"
-        justifyContent="center"
-        gap={3}
-        marginTop={2}
-      >
+      <box flexDirection="row" justifyContent="center" gap={3} marginTop={2}>
         <text fg="#666" attributes={TextAttributes.DIM}>
           [Tab] Switch mode
         </text>
