@@ -25,19 +25,31 @@ export function AiChat() {
 
   const { prompt } = ChatRouteState.parse(location.state ?? {})
 
+  // Navigate ref — stable for useEffect deps, always reads latest function
+  const navigateRef = useRef(navigate)
+  navigateRef.current = navigate
+
   useEffect(() => {
     if (!sessionId) return
+
+    let cancelled = false
+    setInitialMessages(null)
 
     client.api.sessions[':sessionId'].messages
       .$get({ param: { sessionId } })
       .then(async (res) => {
+        if (cancelled) return
         if (res.status === 404) {
-          navigate('/', { state: { sessionExpired: true }, replace: true })
+          navigateRef.current('/', {
+            state: { sessionExpired: true },
+            replace: true,
+          })
           return
         }
         const data = (await res.json()) as {
           messages: Array<Record<string, unknown>>
         }
+        if (cancelled) return
         setInitialMessages(
           data.messages.map((m) => ({
             id: m.id as string,
@@ -46,15 +58,23 @@ export function AiChat() {
               Array.isArray(m.parts) && m.parts.length > 0
                 ? (m.parts as UIMessage['parts'])
                 : [
-                  {
-                    type: 'text' as const,
-                    text: (m.content as string) ?? '',
-                  },
-                ],
+                    {
+                      type: 'text' as const,
+                      text: (m.content as string) ?? '',
+                    },
+                  ],
           })),
         )
       })
-  }, [sessionId, navigate])
+      .catch(() => {
+        if (cancelled) return
+        setInitialMessages([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId])
 
   if (initialMessages === null) {
     return (
@@ -88,10 +108,8 @@ function AiChatInner({
   const { mode } = useModeContext()
   const chatCommands = useChatCommands()
 
-  // 使用 useRef 保持 agent 引用稳定，避免模式切换时重建
   const agentRef = useRef(new CodingAgent(DEFAULT_MODE))
 
-  // 模式切换时，只更新 agent 的状态，不重建对象
   useEffect(() => {
     agentRef.current.setMode(mode)
   }, [mode])

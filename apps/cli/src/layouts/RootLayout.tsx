@@ -2,6 +2,7 @@ import { TextAttributes, type KeyEvent } from '@opentui/core'
 import { useKeyboard, useRenderer } from '@opentui/react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useModeContext } from '../lib/modes'
+import { SessionsDialog } from '../components/SessionsDialog'
 
 const navItems = [
   { key: 'h', path: '/', label: 'Home' },
@@ -45,6 +46,8 @@ export function RootLayout() {
       <box flexGrow={1} padding={1}>
         <Outlet />
       </box>
+
+      <SessionsDialog />
 
       {/* Footer */}
       <box

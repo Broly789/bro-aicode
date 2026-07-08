@@ -10,6 +10,7 @@ import {
   findPartByToolCallId,
   updatePartAtIndex,
 } from './message-helpers'
+import { invalidateSessions } from './sessions-store'
 
 /** Agent 循环的 UI 状态 */
 export type AgentLoopStatus =
@@ -242,6 +243,7 @@ export function useAgentLoop({
       } finally {
         runningRef.current = false
         abortRef.current = null
+        invalidateSessions()
       }
     },
     [apiUrl],
