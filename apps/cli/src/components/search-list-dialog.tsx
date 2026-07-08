@@ -58,6 +58,14 @@ export function DialogSearchList<T>({
 
   filteredRef.current = filtered
 
+  // Clamp selectedIndex when filtered list shrinks
+  useEffect(() => {
+    if (filtered.length > 0 && selectedIndex >= filtered.length) {
+      setSelectedIndex(0)
+      selectedIndexRef.current = 0
+    }
+  }, [filtered.length, selectedIndex])
+
   const needsScroll = filtered.length > maxVisibleOptions
 
   useLayerKeyboard((key) => {

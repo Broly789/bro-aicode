@@ -10,6 +10,7 @@ import { CommandList } from '../CommandList'
 import { useCommandPopover } from '../../hooks/use-command-popover'
 import { EmptyBorder } from '../border'
 import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
+import { useRenderer } from '@opentui/react'
 
 const MODEL = process.env.AI_MODEL ?? 'unknown'
 
@@ -44,6 +45,7 @@ function safeSetText(instance: TextareaRenderable | null, text: string) {
 
 export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: TextAreaProps) {
   const textareaRef = useRef<TextareaRenderable>(null)
+  const renderer = useRenderer()
   const { mode } = useModeContext()
   const isTopLayer = useLayerFocus(layerId)
   const {
@@ -69,12 +71,16 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   }, [syncValue])
 
   useLayerKeyboard((event: KeyEvent) => {
-    // Capture Ctrl+C to prevent app exit — clears textarea instead
     if (event.ctrl && event.name === 'c' && !disabled) {
       event.preventDefault()
       event.stopPropagation()
-      safeSetText(textareaRef.current, '')
-      clear()
+      const content = safeGetText(textareaRef.current)
+      if (content.trim()) {
+        safeSetText(textareaRef.current, '')
+        clear()
+      } else {
+        renderer.destroy()
+      }
     }
   }, layerId)
 
