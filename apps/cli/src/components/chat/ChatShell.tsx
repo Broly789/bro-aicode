@@ -95,7 +95,7 @@ export function ChatShell({
         <text fg="#333">{'─'.repeat(100)}</text>
       </box>
 
-      <ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} />
+      <ChatTextArea onSubmit={onSubmit} disabled={isInputDisabled} layerId="chat" />
     </box>
   )
 }

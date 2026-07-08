@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { DialogOverlay, Dialog, useDialog } from './dialog'
 import { format, isToday, isYesterday } from 'date-fns'
@@ -28,9 +28,14 @@ export function SessionsDialog() {
   const { isOpen, close } = useDialog()
   const navigate = useNavigate()
   const { sessions } = useSessions()
-  const openCount = useRef(0)
+  const wasOpen = useRef(false)
+  const [resetKey, setResetKey] = useState(0)
 
-  if (isOpen) openCount.current++
+  if (isOpen && !wasOpen.current) {
+    wasOpen.current = true
+    setResetKey((k) => k + 1)
+  }
+  if (!isOpen) wasOpen.current = false
 
   useEffect(() => {
     if (isOpen) refreshSessions()
@@ -76,9 +81,9 @@ export function SessionsDialog() {
 
   return (
     <DialogOverlay>
-      <Dialog title="Sessions" maxWidth={75}>
+      <Dialog title="Sessions" maxWidth={65}>
         <DialogSearchList
-          resetKey={openCount.current}
+          key={resetKey}
           items={sessions}
           onSelect={selectSession}
           filterFn={filterFn}

@@ -1,8 +1,9 @@
 import { TextAttributes, type KeyEvent } from '@opentui/core'
-import { useKeyboard, useRenderer } from '@opentui/react'
+import { useRenderer } from '@opentui/react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useModeContext } from '../lib/modes'
 import { SessionsDialog } from '../components/SessionsDialog'
+import { useGlobalKeyboard } from '../lib/layers'
 
 const navItems = [
   { key: 'h', path: '/', label: 'Home' },
@@ -15,7 +16,7 @@ export function RootLayout() {
   const location = useLocation()
   const { mode, cycleMode } = useModeContext()
 
-  useKeyboard((event: KeyEvent) => {
+  useGlobalKeyboard((event: KeyEvent) => {
     if (event.name === 'h' && event.shift) navigate('/')
     if (event.name === 's' && event.shift) navigate('/settings')
     if (event.name === 'tab') cycleMode()

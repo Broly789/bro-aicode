@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from 'react'
 import { TextAttributes, type KeyEvent } from '@opentui/core'
-import { useKeyboard } from '@opentui/react'
+import { useLayer, useLayerKeyboard } from '../lib/layers'
 
 // ── Context ──────────────────────────────────────────────────────────
 
@@ -57,12 +57,14 @@ export function DialogProvider({ children }: { children: ReactNode }) {
 
 type DialogOverlayProps = {
   children: ReactNode
+  layerId?: string
 }
 
-export function DialogOverlay({ children }: DialogOverlayProps) {
+export function DialogOverlay({ children, layerId = 'dialog' }: DialogOverlayProps) {
   const { close } = useDialog()
+  const { isTopLayer, zIndex } = useLayer(layerId)
 
-  useKeyboard((event: KeyEvent) => {
+  useLayerKeyboard((event: KeyEvent) => {
     if (
       event.name === 'tab' ||
       ((event.name === 'h' || event.name === 's' || event.name === 'q') &&
@@ -77,7 +79,13 @@ export function DialogOverlay({ children }: DialogOverlayProps) {
       event.stopPropagation()
       close()
     }
-  })
+    // Ctrl+C also closes the dialog
+    if (event.ctrl && event.name === 'c') {
+      event.preventDefault()
+      event.stopPropagation()
+      close()
+    }
+  }, layerId)
 
   return (
     <box
@@ -90,10 +98,10 @@ export function DialogOverlay({ children }: DialogOverlayProps) {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      zIndex={100}
-      onMouseDown={close}
+      zIndex={zIndex}
+      onMouseDown={() => close()}
     >
-      <box onMouseDown={(e: unknown) => e}>{children}</box>
+      {children}
     </box>
   )
 }
@@ -107,7 +115,7 @@ type DialogProps = {
 }
 
 export function Dialog({ title, maxWidth = 160, children }: DialogProps) {
-  const { title: ctxTitle } = useDialog()
+  const { title: ctxTitle, close } = useDialog()
   const displayTitle = title ?? ctxTitle ?? 'Dialog'
 
   return (
@@ -115,7 +123,7 @@ export function Dialog({ title, maxWidth = 160, children }: DialogProps) {
       width={maxWidth}
       backgroundColor="#141414D9"
       flexDirection="column"
-      onMouseDown={(e: unknown) => e}
+      onMouseDown={(e: unknown) => (e as { stopPropagation?: () => void }).stopPropagation?.()}
     >
       {/* Header */}
       <box

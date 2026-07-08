@@ -4,8 +4,8 @@ import {
   type InputRenderable,
   type ScrollBoxRenderable,
 } from '@opentui/core'
-import { useKeyboard } from '@opentui/react'
-import { DialogOverlay, Dialog } from './dialog'
+import { DialogOverlay, Dialog, useDialog } from './dialog'
+import { useLayerKeyboard } from '../lib/layers'
 
 const MAX_VISIBLE_ITEMS = 10
 
@@ -21,7 +21,6 @@ type DialogSearchListProps<T> = {
   placeholder?: string
   emptyText?: string
   maxVisibleOptions?: number
-  resetKey?: number
 }
 
 export function DialogSearchList<T>({
@@ -34,7 +33,6 @@ export function DialogSearchList<T>({
   placeholder = 'Search',
   emptyText = 'No results',
   maxVisibleOptions = MAX_VISIBLE_ITEMS,
-  resetKey,
 }: DialogSearchListProps<T>) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [searchValue, setSearchValue] = useState('')
@@ -42,16 +40,6 @@ export function DialogSearchList<T>({
   const scrollRef = useRef<ScrollBoxRenderable>(null)
   const selectedIndexRef = useRef(0)
   const filteredRef = useRef<T[]>(items)
-  const prevResetKey = useRef(resetKey)
-
-  // resetKey 变化时同步重置状态（渲染阶段，不等 effect）
-  if (resetKey !== undefined && resetKey !== prevResetKey.current) {
-    prevResetKey.current = resetKey
-    setSelectedIndex(0)
-    selectedIndexRef.current = 0
-    setSearchValue('')
-    if (inputRef.current) inputRef.current.value = ''
-  }
 
   useEffect(() => {
     scrollRef.current?.scrollChildIntoView(`opt-${selectedIndex}`)
@@ -69,11 +57,10 @@ export function DialogSearchList<T>({
     : items
 
   filteredRef.current = filtered
-  selectedIndexRef.current = selectedIndex
 
   const needsScroll = filtered.length > maxVisibleOptions
 
-  useKeyboard((key) => {
+  useLayerKeyboard((key) => {
     const currentFiltered = filteredRef.current
     const currentSelectedIndex = selectedIndexRef.current
     if (key.name === 'return' || key.name === 'enter') {
@@ -88,7 +75,7 @@ export function DialogSearchList<T>({
       setSelectedIndex(next)
       selectedIndexRef.current = next
     }
-  })
+  }, 'dialog')
 
   return (
     <box flexDirection="column" gap={1} width="100%">
@@ -97,6 +84,7 @@ export function DialogSearchList<T>({
         placeholder={placeholder}
         focused
         onInput={handleInput}
+        onMouseDown={(e: unknown) => (e as { stopPropagation?: () => void }).stopPropagation?.()}
       />
       {filtered.length === 0 ? (
         <text attributes={TextAttributes.DIM}>{emptyText}</text>
@@ -163,7 +151,10 @@ function OptionRow({
       id={id}
       height={1}
       backgroundColor={isSelected ? '#00FFFF' : undefined}
-      onMouseDown={onMouseDown}
+      onMouseDown={(e: unknown) => {
+        ;(e as { stopPropagation?: () => void }).stopPropagation?.()
+        onMouseDown()
+      }}
       onMouseOver={onMouseOver}
     >
       <box flexDirection="row" gap={2} paddingLeft={1} paddingRight={1}>
@@ -198,6 +189,16 @@ export function SearchListDialog({
   maxVisibleOptions = MAX_VISIBLE_ITEMS,
   onSelect,
 }: SearchListDialogProps) {
+  const { isOpen } = useDialog()
+  const wasOpen = useRef(false)
+  const [resetKey, setResetKey] = useState(0)
+
+  if (isOpen && !wasOpen.current) {
+    wasOpen.current = true
+    setResetKey((k) => k + 1)
+  }
+  if (!isOpen) wasOpen.current = false
+
   const defaultFilter = useCallback(
     (item: SearchOption, query: string) =>
       item.label.toLowerCase().includes(query.toLowerCase()),
@@ -231,6 +232,7 @@ export function SearchListDialog({
     <DialogOverlay>
       <Dialog title={title} maxWidth={maxWidth}>
         <DialogSearchList
+          key={resetKey}
           items={options}
           onSelect={onSelect}
           filterFn={defaultFilter}

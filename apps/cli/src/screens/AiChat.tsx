@@ -1,5 +1,4 @@
 import { type KeyEvent } from '@opentui/core'
-import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import type { UIMessage } from 'ai'
@@ -10,6 +9,7 @@ import { useModeContext } from '../lib/modes'
 import { ChatShell } from '../components/chat/ChatShell'
 import { CodingAgent, DEFAULT_MODE } from '@brocode/ai/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
+import { useLayerKeyboard, useLayer } from '../lib/layers'
 
 const ChatRouteState = z.object({
   prompt: z.string().default(''),
@@ -108,6 +108,8 @@ function AiChatInner({
   const { mode } = useModeContext()
   const chatCommands = useChatCommands()
 
+  useLayer('chat')
+
   const agentRef = useRef(new CodingAgent(DEFAULT_MODE))
 
   useEffect(() => {
@@ -125,19 +127,23 @@ function AiChatInner({
     stop,
   } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current })
 
-  const handleEsc = useCallback(
-    (event: KeyEvent) => {
-      if (event.name === 'escape') {
-        if (status === 'streaming') {
-          stop()
-        } else {
-          navigate('/')
-        }
+  useLayerKeyboard((event: KeyEvent) => {
+    if (event.name === 'escape') {
+      if (status === 'streaming') {
+        stop()
+      } else {
+        navigate('/')
       }
-    },
-    [navigate, status, stop],
-  )
-  useKeyboard(handleEsc)
+    }
+    // Capture Ctrl+C to stop streaming instead of exiting
+    if (event.ctrl && event.name === 'c') {
+      event.preventDefault()
+      event.stopPropagation()
+      if (status === 'streaming') {
+        stop()
+      }
+    }
+  }, 'chat')
 
   useEffect(() => {
     if (prompt && !sentRef.current) {

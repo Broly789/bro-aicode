@@ -4,6 +4,7 @@ import { router } from './router'
 import { ModeProvider } from './lib/modes'
 import { DialogProvider } from './components/dialog'
 import { preloadSessions } from './lib/sessions-store'
+import { LayerProvider } from './lib/layers'
 
 export function App() {
   useEffect(() => {
@@ -11,12 +12,14 @@ export function App() {
   }, [])
 
   return (
-    <ModeProvider>
-      <DialogProvider>
-        <box width="100%" height="100%">
-          <RouterProvider router={router} />
-        </box>
-      </DialogProvider>
-    </ModeProvider>
+    <LayerProvider>
+      <ModeProvider>
+        <DialogProvider>
+          <box width="100%" height="100%">
+            <RouterProvider router={router} />
+          </box>
+        </DialogProvider>
+      </ModeProvider>
+    </LayerProvider>
   )
 }

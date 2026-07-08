@@ -5,12 +5,11 @@ import {
   type KeyEvent,
   TextAttributes,
 } from '@opentui/core'
-import { useRenderer } from '@opentui/react'
 import { useModeContext } from '../../lib/modes'
-import { CHAT_COMMANDS } from '../../lib/chat-commands'
 import { CommandList } from '../CommandList'
 import { useCommandPopover } from '../../hooks/use-command-popover'
 import { EmptyBorder } from '../border'
+import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
 
 const MODEL = process.env.AI_MODEL ?? 'unknown'
 
@@ -24,6 +23,7 @@ export const TEXTAREA_KEY_BINDINGS: KeyBinding[] = [
 type TextAreaProps = {
   onSubmit?: (value: string) => void
   disabled?: boolean
+  layerId?: string
 }
 
 function safeGetText(instance: TextareaRenderable | null): string {
@@ -42,10 +42,10 @@ function safeSetText(instance: TextareaRenderable | null, text: string) {
   } catch {}
 }
 
-export function ChatTextArea({ onSubmit, disabled = false }: TextAreaProps) {
+export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: TextAreaProps) {
   const textareaRef = useRef<TextareaRenderable>(null)
   const { mode } = useModeContext()
-  const renderer = useRenderer()
+  const isTopLayer = useLayerFocus(layerId)
   const {
     isOpen,
     commands,
@@ -68,19 +68,15 @@ export function ChatTextArea({ onSubmit, disabled = false }: TextAreaProps) {
     return () => clearInterval(interval)
   }, [syncValue])
 
-  useEffect(() => {
-    const handler = (key: KeyEvent) => {
-      if (key.name === 'escape' && !disabled) {
-        safeSetText(textareaRef.current, '')
-        clear()
-      }
+  useLayerKeyboard((event: KeyEvent) => {
+    // Capture Ctrl+C to prevent app exit — clears textarea instead
+    if (event.ctrl && event.name === 'c' && !disabled) {
+      event.preventDefault()
+      event.stopPropagation()
+      safeSetText(textareaRef.current, '')
+      clear()
     }
-
-    renderer.keyInput.on('keypress', handler)
-    return () => {
-      renderer.keyInput.off('keypress', handler)
-    }
-  }, [renderer, disabled, clear])
+  }, layerId)
 
   const handleSubmit = useCallback(() => {
     if (disabled) return
@@ -153,7 +149,7 @@ export function ChatTextArea({ onSubmit, disabled = false }: TextAreaProps) {
             height={5}
             width={'100%'}
             wrapMode="word"
-            focused={!disabled}
+            focused={isTopLayer && !disabled}
             backgroundColor="#122215"
           />
         </box>

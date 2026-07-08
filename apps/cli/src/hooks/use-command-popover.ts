@@ -61,6 +61,7 @@ export function useCommandPopover() {
         const filtered = filterCommands(query)
         setCommands(filtered)
         setIsOpen(filtered.length > 0)
+        setSelectedIndex(0)
       }
     } else {
       lastQueryRef.current = ''
@@ -84,6 +85,7 @@ export function useCommandPopover() {
 
   const clear = useCallback(() => {
     lastQueryRef.current = ''
+    setSelectedIndex(0)
     setIsOpen(false)
   }, [])
 

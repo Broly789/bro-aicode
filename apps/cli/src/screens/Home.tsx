@@ -5,6 +5,7 @@ import { AsciiArt } from '../components/AsciiArt'
 import { ChatTextArea } from '../components/chat/ChatTextArea'
 import { client } from '../lib/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
+import { useLayer } from '../lib/layers'
 
 const HomeRouteState = z.object({
   sessionExpired: z.boolean().default(false),
@@ -14,6 +15,7 @@ export function Home() {
   const navigate = useNavigate()
   const location = useLocation()
   const chatCommands = useChatCommands()
+  useLayer('home')
 
   const { sessionExpired } = HomeRouteState.parse(location.state ?? {})
 

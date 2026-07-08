@@ -1,5 +1,5 @@
 import { TextAttributes, type KeyEvent } from '@opentui/core'
-import { useKeyboard } from '@opentui/react'
+import { useLayerKeyboard } from '../../lib/layers'
 
 type ToolConfirmProps = {
   toolName: string
@@ -14,7 +14,7 @@ export function ToolConfirm({
   onConfirm,
   onDeny,
 }: ToolConfirmProps) {
-  useKeyboard((event: KeyEvent) => {
+  useLayerKeyboard((event: KeyEvent) => {
     if (event.name === 'y') {
       event.preventDefault()
       onConfirm()
@@ -23,7 +23,7 @@ export function ToolConfirm({
       event.preventDefault()
       onDeny()
     }
-  })
+  }, 'chat')
 
   const inputEntries = Object.entries((input ?? {}) as Record<string, unknown>)
     .map(([k, v]) => {
