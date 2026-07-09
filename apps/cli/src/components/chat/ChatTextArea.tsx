@@ -8,7 +8,8 @@ import {
 import { useModeContext } from '../../lib/modes'
 import { CommandList } from '../CommandList'
 import { useCommandPopover } from '../../hooks/use-command-popover'
-import { EmptyBorder } from '../border'
+import { useFileMention } from '../../hooks/use-file-mention'
+import { FileMentionList } from '../FileMentionList'
 import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
 import { useRenderer } from '@opentui/react'
 
@@ -54,21 +55,31 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     selectedIndex,
     syncValue,
     getSelectedCommandName,
-    selectIndex,
     hoverIndex,
     clear,
   } = useCommandPopover()
+  const {
+    isOpen: isFileMentionOpen,
+    files,
+    selectedIndex: fileMentionIndex,
+    syncValue: fileMentionSyncValue,
+    handleInsert: handleFileInsert,
+    hoverIndex: fileMentionHover,
+    close: closeFileMention,
+  } = useFileMention()
 
   useEffect(() => {
     const instance = textareaRef.current
     if (!instance) return
 
     const interval = setInterval(() => {
-      syncValue(safeGetText(instance))
+      const text = safeGetText(instance)
+      syncValue(text)
+      fileMentionSyncValue(text)
     }, 50)
 
     return () => clearInterval(interval)
-  }, [syncValue])
+  }, [syncValue, fileMentionSyncValue])
 
   useLayerKeyboard((event: KeyEvent) => {
     if (event.ctrl && event.name === 'c' && !disabled) {
@@ -78,6 +89,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
       if (content.trim()) {
         safeSetText(textareaRef.current, '')
         clear()
+        closeFileMention()
       } else {
         renderer.destroy()
       }
@@ -89,6 +101,15 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
 
     const content = safeGetText(textareaRef.current)
     if (!content.trim()) return
+
+    // Handle file mention selection on Enter
+    if (isFileMentionOpen) {
+      const inserted = handleFileInsert(
+        () => safeGetText(textareaRef.current),
+        (t) => safeSetText(textareaRef.current, t),
+      )
+      if (inserted) return
+    }
 
     const commandName = getSelectedCommandName()
     if (commandName) {
@@ -102,7 +123,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
 
     onSubmit?.(content.trim())
     safeSetText(textareaRef.current, '')
-  }, [disabled, isOpen, getSelectedCommandName, clear, onSubmit])
+  }, [disabled, isOpen, isFileMentionOpen, getSelectedCommandName, handleFileInsert, clear, onSubmit])
 
   useEffect(() => {
     const instance = textareaRef.current
@@ -122,6 +143,25 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     [commands, onSubmit, clear],
   )
 
+  const handleFileSelect = useCallback(
+    (index: number) => {
+      const file = files[index]
+      if (file) {
+        const text = safeGetText(textareaRef.current)
+        const beforeAtIndex = text.lastIndexOf('@')
+        if (beforeAtIndex !== -1) {
+          const before = text.slice(0, beforeAtIndex)
+          const after = text.slice(beforeAtIndex + 1)
+          const spaceIdx = after.indexOf(' ')
+          const afterMention = spaceIdx !== -1 ? after.slice(spaceIdx) : ''
+          safeSetText(textareaRef.current, before + file + afterMention)
+        }
+        closeFileMention()
+      }
+    },
+    [files, closeFileMention],
+  )
+
   const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
   const borderColor = disabled ? '#333' : modeColor
 
@@ -134,6 +174,16 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
             selectedIndex={selectedIndex}
             onSelect={handleCommandSelect}
             onHover={hoverIndex}
+          />
+        </box>
+      )}
+      {isFileMentionOpen && files.length > 0 && (
+        <box position="absolute" bottom={6} left={4} right={4}>
+          <FileMentionList
+            files={files}
+            selectedIndex={fileMentionIndex}
+            onSelect={handleFileSelect}
+            onHover={fileMentionHover}
           />
         </box>
       )}
