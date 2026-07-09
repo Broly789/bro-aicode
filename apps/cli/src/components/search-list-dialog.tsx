@@ -100,7 +100,6 @@ export function DialogSearchList<T>({
           ref={scrollRef}
           width="100%"
           height={maxVisibleOptions}
-          flexDirection="column"
           backgroundColor="#1a1a2e"
         >
           {filtered.map((item, i) => (

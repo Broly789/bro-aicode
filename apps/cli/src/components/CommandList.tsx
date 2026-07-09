@@ -46,7 +46,6 @@ export function CommandList({ commands, selectedIndex, onSelect, onHover }: Comm
         ref={scrollRef}
         width="100%"
         height={MAX_VISIBLE}
-        flexDirection="column"
         borderStyle="single"
         borderColor="#555"
         backgroundColor="#1a1a2e"

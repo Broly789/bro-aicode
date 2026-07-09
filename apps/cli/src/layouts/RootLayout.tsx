@@ -19,6 +19,7 @@ export function RootLayout() {
   useGlobalKeyboard((event: KeyEvent) => {
     if (event.name === 'h' && event.shift) navigate('/')
     if (event.name === 's' && event.shift) navigate('/settings')
+    if (event.name === 't' && event.shift) navigate('/scrollbox-test')
     if (event.name === 'tab') cycleMode()
     if (event.name === 'q' && event.shift) renderer.destroy()
   })

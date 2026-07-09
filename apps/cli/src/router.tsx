@@ -7,6 +7,7 @@ import { Settings } from './screens/Settings'
 import { Llm } from './screens/Llm'
 import { AiChat } from './screens/AiChat'
 import { NotFound } from './screens/NotFound'
+import { ScrollboxTest } from './components/ScrollboxTest'
 import { ErrorFallback } from './components/ErrorFallback'
 
 export const router = createMemoryRouter(
@@ -21,6 +22,7 @@ export const router = createMemoryRouter(
         { path: 'about', element: <About /> },
         { path: 'settings', element: <Settings /> },
         { path: 'llm', element: <Llm /> },
+        { path: 'scrollbox-test', element: <ScrollboxTest /> },
         { path: 'session/:id', element: <AiChat /> },
         { path: '*', element: <NotFound /> },
       ],

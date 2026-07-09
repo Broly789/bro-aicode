@@ -35,63 +35,54 @@ export function FileMentionList({
 
   if (files.length === 0) return null
 
-  const visibleHeight = Math.min(files.length, MAX_VISIBLE)
+  const needsScroll = files.length > MAX_VISIBLE
+
+  if (needsScroll) {
+    return (
+      <scrollbox
+        ref={scrollRef}
+        width="100%"
+        height={MAX_VISIBLE}
+        borderStyle="single"
+        borderColor="#555"
+        backgroundColor="#1a1a2e"
+        viewportCulling={false}
+      >
+        {files.map((file, i) => (
+          <FileRow key={file} file={file} i={i} selectedIndex={selectedIndex} onSelect={onSelect} onHover={onHover} />
+        ))}
+      </scrollbox>
+    )
+  }
 
   return (
     <box
-      flexDirection="column"
       width="100%"
+      flexDirection="column"
       borderStyle="single"
       borderColor="#555"
       backgroundColor="#1a1a2e"
     >
-      <scrollbox
-        ref={scrollRef}
-        width="100%"
-        height={visibleHeight}
-        flexDirection="column"
-      >
-        {files.map((file, i) => (
-          <FileRow
-            key={file}
-            file={file}
-            isSelected={i === selectedIndex}
-            onSelect={() => onSelect(i)}
-            onHover={() => onHover(i)}
-          />
-        ))}
-      </scrollbox>
+      {files.map((file, i) => (
+        <FileRow key={file} file={file} i={i} selectedIndex={selectedIndex} onSelect={onSelect} onHover={onHover} />
+      ))}
     </box>
   )
 }
 
-function FileRow({
-  file,
-  isSelected,
-  onSelect,
-  onHover,
-}: {
-  file: string
-  isSelected: boolean
-  onSelect: () => void
-  onHover: () => void
-}) {
+function FileRow({ file, i, selectedIndex, onSelect, onHover }: { file: string; i: number; selectedIndex: number; onSelect: (i: number) => void; onHover: (i: number) => void }) {
+  const isSelected = i === selectedIndex
   return (
     <box
+      id={`file-${i}`}
       flexDirection="row"
+      gap={2}
       height={1}
-      overflow="hidden"
       backgroundColor={isSelected ? '#00FFFF' : undefined}
-      onMouseDown={(e: unknown) => {
-        ; (e as { stopPropagation?: () => void }).stopPropagation?.()
-        onSelect()
-      }}
-      onMouseOver={onHover}
+      onMouseDown={() => onSelect(i)}
+      onMouseOver={() => onHover(i)}
     >
-      <text
-        fg={isSelected ? '#1a1a2e' : '#CCC'}
-        attributes={isSelected ? TextAttributes.BOLD : undefined}
-      >
+      <text fg={isSelected ? '#1a1a2e' : '#CCC'} attributes={isSelected ? TextAttributes.BOLD : undefined}>
         {file}
       </text>
     </box>
