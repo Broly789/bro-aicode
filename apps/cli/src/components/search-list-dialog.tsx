@@ -45,8 +45,8 @@ export function DialogSearchList<T>({
     scrollRef.current?.scrollChildIntoView(`opt-${selectedIndex}`)
   }, [selectedIndex])
 
-  const handleInput = useCallback(() => {
-    const text = inputRef.current?.value ?? ''
+  const handleInput = useCallback((value?: unknown) => {
+    const text = typeof value === 'string' ? value : (inputRef.current?.value ?? '')
     setSearchValue(text)
     setSelectedIndex(0)
     selectedIndexRef.current = 0
@@ -65,8 +65,6 @@ export function DialogSearchList<T>({
       selectedIndexRef.current = 0
     }
   }, [filtered.length, selectedIndex])
-
-  const needsScroll = filtered.length > maxVisibleOptions
 
   useLayerKeyboard((key) => {
     const currentFiltered = filteredRef.current
@@ -96,8 +94,9 @@ export function DialogSearchList<T>({
       />
       {filtered.length === 0 ? (
         <text attributes={TextAttributes.DIM}>{emptyText}</text>
-      ) : needsScroll ? (
+      ) : (
         <scrollbox
+          key={searchValue ? 'filtered' : 'all'}
           ref={scrollRef}
           width="100%"
           height={maxVisibleOptions}
@@ -119,23 +118,6 @@ export function DialogSearchList<T>({
             </OptionRow>
           ))}
         </scrollbox>
-      ) : (
-        <box width="100%" flexDirection="column" backgroundColor="#1a1a2e">
-          {filtered.map((item, i) => (
-            <OptionRow
-              key={getKey(item)}
-              id={`opt-${i}`}
-              isSelected={i === selectedIndex}
-              onMouseDown={() => onSelect(item)}
-              onMouseOver={() => {
-                setSelectedIndex(i)
-                if (onHighlight) onHighlight(item)
-              }}
-            >
-              {renderItem(item, i === selectedIndex)}
-            </OptionRow>
-          ))}
-        </box>
       )}
     </box>
   )

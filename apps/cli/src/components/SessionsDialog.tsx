@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { DialogOverlay, Dialog, useDialog } from './dialog'
-import { format, isToday, isYesterday } from 'date-fns'
 import {
   useSessions,
   refreshSessions,
@@ -9,15 +8,32 @@ import {
 } from '../lib/sessions-store'
 import { DialogSearchList } from './search-list-dialog'
 
+function shanghaiDate(d: Date): string {
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' })
+}
+
 function dateLabel(iso: string): string {
   const d = new Date(iso)
-  if (isToday(d)) return 'Today'
-  if (isYesterday(d)) return 'Yesterday'
-  return format(d, 'MMM d, yyyy')
+  const today = shanghaiDate(new Date())
+  const dateStr = shanghaiDate(d)
+  if (dateStr === today) return 'Today'
+  const yesterday = new Date(Date.now() - 86400000)
+  if (dateStr === shanghaiDate(yesterday)) return 'Yesterday'
+  return d.toLocaleDateString('en-US', {
+    timeZone: 'Asia/Shanghai',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 function timeLabel(iso: string): string {
-  return format(new Date(iso), 'h:mm a')
+  return new Date(iso).toLocaleTimeString('en-US', {
+    timeZone: 'Asia/Shanghai',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
 }
 
 function truncate(text: string, maxLen: number): string {
@@ -66,11 +82,14 @@ export function SessionsDialog() {
         >
           {truncate(item.title ?? 'Untitled', 26)}
         </text>
-        <text fg={isSelected ? '#1a1a2e' : '#888'} marginRight={2}>
-          {dateLabel(item.createdAt)} {timeLabel(item.createdAt)}
+        <text fg={isSelected ? '#1a1a2e' : '#888'} width={14}>
+          {dateLabel(item.createdAt)}
         </text>
-        <text fg={isSelected ? '#1a1a2e' : '#888'}>
-          {item.messageCount} msgs
+        <text fg={isSelected ? '#1a1a2e' : '#888'} width={6}>
+          {timeLabel(item.createdAt)}
+        </text>
+        <text fg={isSelected ? '#1a1a2e' : '#888'} width={7}>
+          {item.messageCount}msgs
         </text>
       </>
     ),
