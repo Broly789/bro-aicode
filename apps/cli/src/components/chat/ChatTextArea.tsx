@@ -12,6 +12,7 @@ import { useFileMention } from '../../hooks/use-file-mention'
 import { FileMentionList } from '../FileMentionList'
 import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
 import { useRenderer } from '@opentui/react'
+import { EmptyBorder } from '../border'
 
 const MODEL = process.env.AI_MODEL ?? 'unknown'
 
@@ -189,13 +190,13 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     [files, closeFileMention],
   )
 
-  const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
+  const modeColor = mode.id === 'build' ? '#d33682' : '#FFD700'
   const borderColor = disabled ? '#333' : modeColor
 
   return (
     <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4} width={'100%'}>
       {isOpen && commands.length > 0 && (
-        <box position="absolute" bottom={9} left={4} right={4}>
+        <box position="absolute" bottom={8} left={4} right={4}>
           <CommandList
             commands={commands}
             selectedIndex={selectedIndex}
@@ -205,7 +206,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
         </box>
       )}
       {isFileMentionOpen && files.length > 0 && (
-        <box position="absolute" bottom={9} left={4} right={4}>
+        <box position="absolute" bottom={8} left={4} right={4}>
           <FileMentionList
             files={files}
             selectedIndex={fileMentionIndex}
@@ -215,18 +216,25 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
         </box>
       )}
 
+      {/* 可以参考这个 https://github.com/anomalyco/opencode/blob/dev/packages/tui/src/component/prompt/index.tsx */}
       <box flexDirection="row">
-        <box width={1} flexShrink={0} backgroundColor={borderColor} />
-        <box flexGrow={1} backgroundColor="#122215" paddingLeft={1} paddingRight={1} paddingTop={'2%'} paddingBottom={1}>
+        <box border={["left"]}
+          borderColor={borderColor}
+          customBorderChars={{
+            ...EmptyBorder,
+            vertical: "┃",
+            bottomLeft: "╹",
+          }} width={1} flexShrink={0} />
+        <box flexGrow={1} backgroundColor="#292c29" padding={1} paddingTop={'2%'}>
           <textarea
             ref={textareaRef}
             placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
             keyBindings={TEXTAREA_KEY_BINDINGS}
-            height={5}
+            minHeight={1}
+            height={4}
             width={'100%'}
             wrapMode="word"
             focused={isTopLayer && !disabled}
-            backgroundColor="#122215"
           />
         </box>
       </box>
