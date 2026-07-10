@@ -13,6 +13,7 @@ export function useFileMention() {
   const selectedIndexRef = useRef(0)
   const allFilesRef = useRef<string[]>([])
   const queryRef = useRef('')
+  const dismissedQueryRef = useRef<string | null>(null)
 
   useEffect(() => {
     isOpenRef.current = isOpen
@@ -33,6 +34,7 @@ export function useFileMention() {
   }, [])
 
   const close = useCallback(() => {
+    dismissedQueryRef.current = queryRef.current
     queryRef.current = ''
     setSelectedIndex(0)
     setIsOpen(false)
@@ -113,7 +115,11 @@ export function useFileMention() {
       const mention = detectMention(text)
       if (mention) {
         if (mention.query !== queryRef.current || !isOpenRef.current) {
+          if (dismissedQueryRef.current !== null && mention.query === dismissedQueryRef.current && !isOpenRef.current) {
+            return
+          }
           queryRef.current = mention.query
+          dismissedQueryRef.current = null
           const filtered = filterFiles(allFilesRef.current, mention.query)
           setFiles(filtered)
           setIsOpen(filtered.length > 0)
@@ -121,6 +127,7 @@ export function useFileMention() {
         }
       } else {
         queryRef.current = ''
+        dismissedQueryRef.current = null
         setIsOpen(false)
       }
     },

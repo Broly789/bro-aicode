@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import {
   type TextareaRenderable,
   type KeyBinding,
@@ -49,6 +49,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   const renderer = useRenderer()
   const { mode, think } = useModeContext()
   const isTopLayer = useLayerFocus(layerId)
+  
   const {
     isOpen,
     commands,
@@ -68,6 +69,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     close: closeFileMention,
   } = useFileMention()
 
+  // 清空文本时同步更新两个 syncValue
   useEffect(() => {
     const instance = textareaRef.current
     if (!instance) return
@@ -82,6 +84,22 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
       clearInterval(interval)
     }
   }, [syncValue, fileMentionSyncValue])
+
+  const handleEscape = useCallback(() => {
+    clear()
+  }, [clear])
+
+  useEffect(() => {
+    const handler = (event: KeyEvent) => {
+      if (event.name === 'escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        handleEscape()
+      }
+    }
+    renderer.keyInput.on('keypress', handler)
+    return () => renderer.keyInput.off('keypress', handler)
+  }, [renderer, handleEscape])
 
   useLayerKeyboard((event: KeyEvent) => {
     if (event.ctrl && event.name === 'c' && !disabled) {
@@ -171,18 +189,11 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
 
   const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
   const borderColor = disabled ? '#333' : modeColor
-  const [textareaWidth, setTextareaWidth] = useState(renderer.terminalWidth - 10)
-
-  useEffect(() => {
-    const onResize = () => setTextareaWidth(renderer.terminalWidth - 10)
-    renderer.on('resize', onResize)
-    return () => renderer.off('resize', onResize)
-  }, [renderer])
 
   return (
     <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4} width={'100%'}>
       {isOpen && commands.length > 0 && (
-        <box position="absolute" bottom={6} left={4} right={4}>
+        <box position="absolute" bottom={9} left={4} right={4}>
           <CommandList
             commands={commands}
             selectedIndex={selectedIndex}
@@ -192,7 +203,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
         </box>
       )}
       {isFileMentionOpen && files.length > 0 && (
-        <box position="absolute" bottom={6} left={4} right={4}>
+        <box position="absolute" bottom={9} left={4} right={4}>
           <FileMentionList
             files={files}
             selectedIndex={fileMentionIndex}
@@ -204,18 +215,18 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
 
       <box flexDirection="row">
         <box width={1} flexShrink={0} backgroundColor={borderColor} />
-        <textarea
-          ref={textareaRef}
-          placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
-          keyBindings={TEXTAREA_KEY_BINDINGS}
-          paddingRight={1}
-          paddingLeft={1}
-          height={5}
-          width={textareaWidth}
-          wrapMode="word"
-          focused={isTopLayer && !disabled}
-          backgroundColor="#122215"
-        />
+        <box flexGrow={1} backgroundColor="#122215" paddingLeft={1} paddingRight={1} paddingTop={'2%'} paddingBottom={1}>
+          <textarea
+            ref={textareaRef}
+            placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
+            keyBindings={TEXTAREA_KEY_BINDINGS}
+            height={5}
+            width={'100%'}
+            wrapMode="word"
+            focused={isTopLayer && !disabled}
+            backgroundColor="#122215"
+          />
+        </box>
       </box>
       <box flexDirection="row" justifyContent="space-between" gap={2} paddingLeft={1}>
         <box flexDirection="row" gap={1}>

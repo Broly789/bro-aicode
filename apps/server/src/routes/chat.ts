@@ -112,7 +112,7 @@ export const chatRoute = new Hono().post(
           parts.push({
             type: `tool-${tc.toolName}`,
             toolCallId: tc.toolCallId,
-            state: 'call',
+            state: 'input-available',
             input: tc.input,
           })
         }

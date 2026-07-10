@@ -13,6 +13,7 @@ export function useCommandPopover() {
   const commandsRef = useRef<Command[]>([])
   const selectedIndexRef = useRef(0)
   const lastQueryRef = useRef('')
+  const dismissedQueryRef = useRef<string | null>(null)
 
   useEffect(() => { isOpenRef.current = isOpen }, [isOpen])
   useEffect(() => { commandsRef.current = commands }, [commands])
@@ -52,19 +53,26 @@ export function useCommandPopover() {
     if (value.startsWith('/')) {
       const query = value.slice(1)
       if (query !== lastQueryRef.current) {
+        if (dismissedQueryRef.current !== null && query === dismissedQueryRef.current && !isOpenRef.current) {
+          return
+        }
         lastQueryRef.current = query
+        dismissedQueryRef.current = null
         const filtered = filterCommands(query)
         setCommands(filtered)
         setIsOpen(filtered.length > 0)
         setSelectedIndex(0)
       } else if (!isOpenRef.current) {
-        const filtered = filterCommands(query)
-        setCommands(filtered)
-        setIsOpen(filtered.length > 0)
-        setSelectedIndex(0)
+        if (dismissedQueryRef.current === null || query !== dismissedQueryRef.current) {
+          const filtered = filterCommands(query)
+          setCommands(filtered)
+          setIsOpen(filtered.length > 0)
+          setSelectedIndex(0)
+        }
       }
     } else {
       lastQueryRef.current = ''
+      dismissedQueryRef.current = null
       setIsOpen(false)
     }
   }, [])
@@ -84,6 +92,7 @@ export function useCommandPopover() {
   }, [])
 
   const clear = useCallback(() => {
+    dismissedQueryRef.current = lastQueryRef.current
     lastQueryRef.current = ''
     setSelectedIndex(0)
     setIsOpen(false)

@@ -57,11 +57,12 @@ function normalizeToolParts(messages: UIMessage[]): UIMessage[] {
           const part = p as Record<string, unknown>
           const toolName = (p.type as string).slice(5)
           const state = part.state as string | undefined
+          const normalizedState = state === 'call' ? 'input-available' : (state ?? 'input-available')
           const result: Record<string, unknown> = {
             type: 'dynamic-tool',
             toolName,
             toolCallId: part.toolCallId,
-            state: state ?? 'input-available',
+            state: normalizedState,
             input: part.input ?? {},
           }
           if ('output' in part) result.output = part.output
