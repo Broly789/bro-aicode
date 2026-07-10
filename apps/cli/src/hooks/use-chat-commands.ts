@@ -2,6 +2,7 @@ import { useRenderer } from '@opentui/react'
 import { useNavigate } from 'react-router'
 import { handleCommand } from '../lib/commands'
 import { useDialog } from '../components/dialog'
+import { toast } from '../components/toast'
 
 export function useChatCommands() {
   const navigate = useNavigate()
@@ -9,5 +10,5 @@ export function useChatCommands() {
   const { open: openDialog } = useDialog()
 
   return (input: string) =>
-    handleCommand(input, navigate, renderer, { openDialog })
+    handleCommand(input, navigate, renderer, { openDialog, toast })
 }

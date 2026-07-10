@@ -1,6 +1,7 @@
 import type { NavigateFunction } from 'react-router';
 import type { CliRenderer } from '@opentui/core';
 import type { ChatCommand, ChatCommandName } from './chat-commands';
+import type { ToastFunction } from '../components/toast';
 import { client } from './client';
 import { CHAT_COMMANDS } from './chat-commands';
 
@@ -97,6 +98,8 @@ export type CommandResult = string | boolean;
 
 export type CommandActions = {
   openDialog?: (title?: string) => void
+  /** Sonner-style toast API — call `actions.toast?.('done')` from a command handler. */
+  toast?: ToastFunction
 };
 
 /**
@@ -125,6 +128,37 @@ export async function handleCommand(
     return true
   }
 
+  // Toast demo commands — exercise every variant of the toast API
+  if (inputCmd in TOAST_COMMANDS) {
+    TOAST_COMMANDS[inputCmd as keyof typeof TOAST_COMMANDS](actions?.toast)
+    return true
+  }
+
   const executeRes = await targetCommand.action(navigate, renderer);
   return executeRes ?? true;
+}
+
+// ── Toast demo commands ────────────────────────────────────────────
+// Each maps a slash command to a call on the Sonner-style `toast` API.
+type ToastAction = (toast?: ToastFunction) => void
+
+const TOAST_COMMANDS: Record<string, ToastAction> = {
+  '/toast': (toast) => toast?.('This is a default toast', { title: 'Notification' }),
+  '/success': (toast) => toast?.success('Operation succeeded', { title: 'Success', description: 'Variant: success' }),
+  '/error': (toast) => toast?.error('Something went wrong', { title: 'Error', description: 'Variant: error' }),
+  '/info': (toast) => toast?.info('Here is some information', { title: 'Info', description: 'Variant: info' }),
+  '/warning': (toast) => toast?.warning('Proceed with caution', { title: 'Warning', description: 'Variant: warning' }),
+  '/loading': (toast) => {
+    const id = toast?.loading('Loading…', { title: 'Please wait' })
+    if (id) setTimeout(() => toast?.dismiss(id), 2500)
+  },
+  '/promise': (toast) =>
+    toast?.promise(
+      new Promise<string>((resolve) => setTimeout(() => resolve('ok'), 1500)),
+      {
+        loading: 'Saving changes…',
+        success: (data) => `Saved! (${data})`,
+        error: 'Failed to save',
+      },
+    ),
 }

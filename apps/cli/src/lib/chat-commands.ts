@@ -57,6 +57,13 @@ const commandDefs: ChatCommand[] = [
   { name: '/modernize', description: 'Modernize the codebase' },
   { name: '/sessions', description: 'Open sessions dialog' },
   { name: '/thinking', description: 'Toggle reasoning mode (chain-of-thought)' },
+  { name: '/toast', description: 'Show a default toast notification' },
+  { name: '/success', description: 'Show a success toast notification' },
+  { name: '/error', description: 'Show an error toast notification' },
+  { name: '/info', description: 'Show an info toast notification' },
+  { name: '/warning', description: 'Show a warning toast notification' },
+  { name: '/loading', description: 'Show a loading toast (auto-dismiss)' },
+  { name: '/promise', description: 'Show a promise-driven toast (loading → success)' },
 ]
 
 export type ChatCommandName =
@@ -69,5 +76,6 @@ export type ChatCommandName =
   | '/cherry-pick' | '/stash' | '/pop' | '/diff' | '/log' | '/blame'
   | '/hotspot' | '/coverage' | '/benchmark' | '/profile' | '/analyze'
   | '/suggest' | '/optimize' | '/simplify' | '/modernize' | '/sessions' | '/thinking'
+  | '/toast' | '/success' | '/error' | '/info' | '/warning' | '/loading' | '/promise'
 
 export const CHAT_COMMANDS = commandDefs

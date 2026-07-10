@@ -49,7 +49,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   const renderer = useRenderer()
   const { mode, think } = useModeContext()
   const isTopLayer = useLayerFocus(layerId)
-  
+
   const {
     isOpen,
     commands,
@@ -98,7 +98,9 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
       }
     }
     renderer.keyInput.on('keypress', handler)
-    return () => renderer.keyInput.off('keypress', handler)
+    return () => {
+      renderer.keyInput.off('keypress', handler)
+    }
   }, [renderer, handleEscape])
 
   useLayerKeyboard((event: KeyEvent) => {

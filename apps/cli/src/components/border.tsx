@@ -10,9 +10,12 @@ export const EmptyBorder = {
     cross: "",
     leftT: "",
     rightT: "",
-};
+}
 
-export const SplitBorderChars = {
-    ...EmptyBorder,
-    vertical: "┃",
-};
+export const SplitBorder = {
+    border: ["left" as const, "right" as const],
+    customBorderChars: {
+        ...EmptyBorder,
+        vertical: "┃",
+    },
+}
