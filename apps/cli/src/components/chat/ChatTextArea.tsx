@@ -78,7 +78,9 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
       fileMentionSyncValue(text)
     }, 50)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+    }
   }, [syncValue, fileMentionSyncValue])
 
   useLayerKeyboard((event: KeyEvent) => {
@@ -102,13 +104,15 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     const content = safeGetText(textareaRef.current)
     if (!content.trim()) return
 
-    // Handle file mention selection on Enter
     if (isFileMentionOpen) {
       const inserted = handleFileInsert(
         () => safeGetText(textareaRef.current),
         (t) => safeSetText(textareaRef.current, t),
       )
-      if (inserted) return
+      if (inserted) {
+        try { textareaRef.current?.gotoBufferEnd() } catch {}
+        return
+      }
     }
 
     const commandName = getSelectedCommandName()
@@ -147,14 +151,17 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
     (index: number) => {
       const file = files[index]
       if (file) {
-        const text = safeGetText(textareaRef.current)
+        const instance = textareaRef.current
+        const text = safeGetText(instance)
         const beforeAtIndex = text.lastIndexOf('@')
         if (beforeAtIndex !== -1) {
           const before = text.slice(0, beforeAtIndex)
           const after = text.slice(beforeAtIndex + 1)
           const spaceIdx = after.indexOf(' ')
           const afterMention = spaceIdx !== -1 ? after.slice(spaceIdx) : ''
-          safeSetText(textareaRef.current, before + file + afterMention)
+          const newText = before + '@' + file + ' ' + afterMention
+          safeSetText(instance, newText)
+          try { instance?.gotoBufferEnd() } catch {}
         }
         closeFileMention()
       }

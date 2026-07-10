@@ -96,6 +96,9 @@ export function useFileMention() {
     // Skip if there's a space right after @ (end of mention)
     if (afterAt.startsWith(' ')) return null
 
+    // If query already contains a path separator, it's an already-inserted file path
+    if (afterAt.includes('/')) return null
+
     // Only match if at end of text or followed by a word character
     if (afterAt.length > 0 && !/\w/.test(afterAt[0])) return null
 
@@ -137,8 +140,8 @@ export function useFileMention() {
 
       const before = text.slice(0, mention.startIndex)
       const after = text.slice(mention.startIndex + 1 + mention.query.length)
-      const needsSpace = after.length > 0 && !after.startsWith(' ')
-      setText(before + file + (needsSpace ? ' ' : '') + after)
+      const newText = before + '@' + file + ' ' + after
+      setText(newText)
       close()
       return true
     },
