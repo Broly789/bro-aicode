@@ -8,6 +8,8 @@ interface ModeContextValue {
   mode: Mode
   cycleMode: () => void
   isToolAllowed: (toolName: string) => boolean
+  think: boolean
+  toggleThink: () => void
 }
 
 const ModeContext = createContext<ModeContextValue | null>(null)
@@ -20,6 +22,7 @@ export function useModeContext() {
 
 export function ModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<Mode>(DEFAULT_MODE)
+  const [think, setThink] = useState(true)
 
   const cycleMode = useCallback(() => {
     setMode((prev) => {
@@ -28,13 +31,17 @@ export function ModeProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  const toggleThink = useCallback(() => {
+    setThink((prev) => !prev)
+  }, [])
+
   const checkToolAllowed = useCallback(
     (toolName: string) => isToolAllowed(toolName, mode),
     [mode],
   )
 
   return (
-    <ModeContext.Provider value={{ mode, cycleMode, isToolAllowed: checkToolAllowed }}>
+    <ModeContext.Provider value={{ mode, cycleMode, isToolAllowed: checkToolAllowed, think, toggleThink }}>
       {children}
     </ModeContext.Provider>
   )

@@ -161,6 +161,7 @@ export async function sendAndReceive(
   agent: CodingAgent,
   onStreamEvent?: (event: AgentLoopEvent) => void,
   signal?: AbortSignal,
+  think: boolean = true,
 ): Promise<{
   events: AgentLoopEvent[]
   result: AgentLoopResult
@@ -171,7 +172,7 @@ export async function sendAndReceive(
     res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: normalized, mode: agent.modeId }),
+      body: JSON.stringify({ messages: normalized, mode: agent.modeId, think }),
       signal,
     })
   } catch (err) {
@@ -392,13 +393,14 @@ export async function runAgentLoop(
   onEvent?: (event: AgentLoopEvent) => void,
   onConfirm?: (toolCall: ToolCallPart) => Promise<boolean>,
   signal?: AbortSignal,
+  think: boolean = true,
 ): Promise<AgentLoopResult> {
   let messages = initialMessages
   let consecutiveToolOnlyRounds = 0   // 连续无文本输出的轮次计数
   let consecutiveAllErrorRounds = 0   // 连续全部工具失败的轮次计数
 
   for (let round = 0; round < 20; round++) {
-    const { result } = await sendAndReceive(apiUrl, messages, agent, onEvent, signal)
+    const { result } = await sendAndReceive(apiUrl, messages, agent, onEvent, signal, think)
     messages = result.messages
 
     // 模型不再请求工具调用 → 本轮结束

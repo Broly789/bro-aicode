@@ -20,6 +20,7 @@ const MODEL = process.env.AI_MODEL ?? 'deepseek-v4-flash'
 const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
   mode: z.enum(['build', 'plan']).optional().default('build'),
+  think: z.boolean().optional().default(true),
 })
 
 const chatParamSchema = z.object({
@@ -32,7 +33,7 @@ export const chatRoute = new Hono().post(
   validateJson(chatBodySchema),
   async (c) => {
     const { sessionId } = c.req.valid('param')
-    const { messages, mode } = c.req.valid('json')
+    const { messages, mode, think } = c.req.valid('json')
 
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
@@ -41,8 +42,26 @@ export const chatRoute = new Hono().post(
       return c.json({ success: false, error: 'Session not found' }, 404)
     }
 
+    // Strip undefined values from parts before validation (Zod strict mode rejects explicit undefined)
+    const cleanedMessages = (messages ?? []).map((msg: any) => {
+      if (msg?.parts && Array.isArray(msg.parts)) {
+        return {
+          ...msg,
+          parts: msg.parts.map((part: any) => {
+            if (!part || typeof part !== 'object') return part
+            const cleaned: Record<string, unknown> = {}
+            for (const [key, val] of Object.entries(part)) {
+              if (val !== undefined) cleaned[key] = val
+            }
+            return cleaned
+          }),
+        }
+      }
+      return msg
+    })
+
     const validatedMessages = await validateUIMessages({
-      messages: messages ?? [],
+      messages: cleanedMessages,
       tools: allCodingTools,
     })
 
@@ -74,11 +93,9 @@ export const chatRoute = new Hono().post(
       messages: modelMessages,
       tools: getCodingToolsForMode(mode),
       stopWhen: isStepCount(20),
-      providerOptions: {
-        deepseek: {
-          thinking: { type: 'enabled' },
-        },
-      },
+      providerOptions: think
+        ? { deepseek: { thinking: { type: 'enabled' } } }
+        : {},
       onFinish: async ({ text, toolCalls, finalStep }) => {
         const parts: Array<object> = []
         const reasoningText = finalStep.reasoningText
@@ -136,7 +153,7 @@ export const chatRoute = new Hono().post(
 
     const stream = toUIMessageStream({
       stream: result.stream,
-      sendReasoning: true,
+      sendReasoning: think,
       originalMessages: validatedMessages,
     })
 

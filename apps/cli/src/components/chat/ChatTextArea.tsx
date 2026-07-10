@@ -41,13 +41,13 @@ function safeSetText(instance: TextareaRenderable | null, text: string) {
   if (!instance) return
   try {
     instance.setText(text)
-  } catch {}
+  } catch { }
 }
 
 export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: TextAreaProps) {
   const textareaRef = useRef<TextareaRenderable>(null)
   const renderer = useRenderer()
-  const { mode } = useModeContext()
+  const { mode, think } = useModeContext()
   const isTopLayer = useLayerFocus(layerId)
   const {
     isOpen,
@@ -110,7 +110,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
         (t) => safeSetText(textareaRef.current, t),
       )
       if (inserted) {
-        try { textareaRef.current?.gotoBufferEnd() } catch {}
+        try { textareaRef.current?.gotoBufferEnd() } catch { }
         return
       }
     }
@@ -161,7 +161,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
           const afterMention = spaceIdx !== -1 ? after.slice(spaceIdx) : ''
           const newText = before + '@' + file + ' ' + afterMention
           safeSetText(instance, newText)
-          try { instance?.gotoBufferEnd() } catch {}
+          try { instance?.gotoBufferEnd() } catch { }
         }
         closeFileMention()
       }
@@ -217,17 +217,20 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
           />
         </box>
       </box>
-      <box flexDirection="row" justifyContent="space-between" paddingLeft={1}>
-        <box flexDirection="row" gap={2}>
+      <box flexDirection="row" justifyContent="space-between" gap={2} paddingLeft={1}>
+        <box flexDirection="row" gap={1}>
           <text fg={modeColor} attributes={TextAttributes.BOLD}>
             {mode.label}
+          </text>
+          <text fg={think ? '#00FFFF' : '#555'} attributes={think ? TextAttributes.BOLD : TextAttributes.DIM}>
+            {think ? 'think:on' : 'think:off'}
           </text>
           <text fg="#CCC" attributes={TextAttributes.DIM}>
             {MODEL}
           </text>
         </box>
         <text fg="#AAA" attributes={TextAttributes.DIM}>
-          Enter send · Shift+Enter newline
+          Shift+Enter newline
         </text>
       </box>
     </box>

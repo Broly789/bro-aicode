@@ -6,6 +6,7 @@ import { ChatTextArea } from '../components/chat/ChatTextArea'
 import { client } from '../lib/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
 import { useLayer } from '../lib/layers'
+import { useModeContext } from '../lib/modes'
 
 const HomeRouteState = z.object({
   sessionExpired: z.boolean().default(false),
@@ -15,11 +16,17 @@ export function Home() {
   const navigate = useNavigate()
   const location = useLocation()
   const chatCommands = useChatCommands()
+  const { toggleThink } = useModeContext()
   useLayer('home')
 
   const { sessionExpired } = HomeRouteState.parse(location.state ?? {})
 
   const handleSubmit = async (value: string) => {
+    const text = value.trim()
+    if (text === '/thinking') {
+      toggleThink()
+      return
+    }
     if (await chatCommands(value)) return
     const res = await client.api.sessions.$post({})
     const { id } = (await res.json()) as { id: string }

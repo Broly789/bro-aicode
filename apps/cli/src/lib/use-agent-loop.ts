@@ -36,10 +36,12 @@ export function useAgentLoop({
   sessionId,
   initialMessages,
   agent,
+  think,
 }: {
   sessionId: string
   initialMessages: UIMessage[]
   agent: CodingAgent
+  think: boolean
 }) {
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages)
   const [status, setStatus] = useState<AgentLoopStatus>('ready')
@@ -63,6 +65,10 @@ export function useAgentLoop({
   // 用 ref 保持 agent 的最新值，避免 useCallback 依赖 agent 导致频繁重建
   const agentRef = useRef(agent)
   agentRef.current = agent
+
+  // 用 ref 保持 think 的最新值
+  const thinkRef = useRef(think)
+  thinkRef.current = think
 
   // 通过 Hono RPC 类型安全地构建 API URL
   const apiUrl = client.api.chat[':sessionId']
@@ -228,6 +234,7 @@ export function useAgentLoop({
             return approved
           },
           controller.signal,
+          thinkRef.current,
         )
 
         // 循环结束，用最终消息列表覆盖流式更新的消息

@@ -105,7 +105,7 @@ function AiChatInner({
 }) {
   const navigate = useNavigate()
   const sentRef = useRef(false)
-  const { mode } = useModeContext()
+  const { mode, think, toggleThink } = useModeContext()
   const chatCommands = useChatCommands()
 
   useLayer('chat')
@@ -125,7 +125,7 @@ function AiChatInner({
     confirm,
     deny,
     stop,
-  } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current })
+  } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current, think })
 
   useLayerKeyboard((event: KeyEvent) => {
     if (event.name === 'escape') {
@@ -157,10 +157,14 @@ function AiChatInner({
       if (status === 'streaming') return
       const text = value.trim()
       if (!text) return
+      if (text === '/thinking') {
+        toggleThink()
+        return
+      }
       if (await chatCommands(text)) return
       sendMessage(text)
     },
-    [status, sendMessage, chatCommands],
+    [status, sendMessage, chatCommands, toggleThink],
   )
 
   return (

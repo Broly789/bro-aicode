@@ -56,6 +56,7 @@ const commandDefs: ChatCommand[] = [
   { name: '/simplify', description: 'Simplify the code' },
   { name: '/modernize', description: 'Modernize the codebase' },
   { name: '/sessions', description: 'Open sessions dialog' },
+  { name: '/thinking', description: 'Toggle reasoning mode (chain-of-thought)' },
 ]
 
 export type ChatCommandName =
@@ -67,6 +68,6 @@ export type ChatCommandName =
   | '/cache' | '/flush' | '/sync' | '/pull' | '/push' | '/merge' | '/rebase'
   | '/cherry-pick' | '/stash' | '/pop' | '/diff' | '/log' | '/blame'
   | '/hotspot' | '/coverage' | '/benchmark' | '/profile' | '/analyze'
-  | '/suggest' | '/optimize' | '/simplify' | '/modernize' | '/sessions'
+  | '/suggest' | '/optimize' | '/simplify' | '/modernize' | '/sessions' | '/thinking'
 
 export const CHAT_COMMANDS = commandDefs
