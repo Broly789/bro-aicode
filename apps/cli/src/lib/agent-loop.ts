@@ -187,6 +187,12 @@ export async function sendAndReceive(
 
   if (!res.ok) {
     const text = await res.text().catch(() => 'Unknown error')
+    try {
+      const body = JSON.parse(text)
+      console.log('[SERVER ERROR]', JSON.stringify({ status: res.status, url: apiUrl, body }, null, 2))
+    } catch {
+      console.log('[SERVER ERROR]', text)
+    }
     throw new Error(`Server error ${res.status}: ${text}`)
   }
 

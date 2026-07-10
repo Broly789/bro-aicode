@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react'
+import { useRef, useCallback, useEffect, useState } from 'react'
 import {
   type TextareaRenderable,
   type KeyBinding,
@@ -171,9 +171,16 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
 
   const modeColor = mode.id === 'build' ? '#00FF00' : '#FFD700'
   const borderColor = disabled ? '#333' : modeColor
+  const [textareaWidth, setTextareaWidth] = useState(renderer.terminalWidth - 10)
+
+  useEffect(() => {
+    const onResize = () => setTextareaWidth(renderer.terminalWidth - 10)
+    renderer.on('resize', onResize)
+    return () => renderer.off('resize', onResize)
+  }, [renderer])
 
   return (
-    <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4}>
+    <box flexShrink={0} flexDirection="column" paddingLeft={4} paddingRight={4} width={'100%'}>
       {isOpen && commands.length > 0 && (
         <box position="absolute" bottom={6} left={4} right={4}>
           <CommandList
@@ -195,27 +202,20 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
         </box>
       )}
 
-      <box flexDirection="row" flexGrow={1}>
+      <box flexDirection="row">
         <box width={1} flexShrink={0} backgroundColor={borderColor} />
-        {/* <box border={["left"]} borderColor={borderColor} customBorderChars={{
-        ...EmptyBorder,
-        vertical: "┃",
-        bottomLeft: "╹",
-      }} flexGrow={1} > */}
-        <box flexGrow={1}>
-          <textarea
-            ref={textareaRef}
-            placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
-            keyBindings={TEXTAREA_KEY_BINDINGS}
-            paddingRight={1}
-            paddingLeft={1}
-            height={5}
-            width={'100%'}
-            wrapMode="word"
-            focused={isTopLayer && !disabled}
-            backgroundColor="#122215"
-          />
-        </box>
+        <textarea
+          ref={textareaRef}
+          placeholder={disabled ? 'Waiting...' : 'Ask anything...'}
+          keyBindings={TEXTAREA_KEY_BINDINGS}
+          paddingRight={1}
+          paddingLeft={1}
+          height={5}
+          width={textareaWidth}
+          wrapMode="word"
+          focused={isTopLayer && !disabled}
+          backgroundColor="#122215"
+        />
       </box>
       <box flexDirection="row" justifyContent="space-between" gap={2} paddingLeft={1}>
         <box flexDirection="row" gap={1}>
