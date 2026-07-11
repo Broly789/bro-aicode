@@ -1,5 +1,4 @@
-import type { UIMessage } from 'ai'
-import { getToolName, isToolUIPart } from 'ai'
+import { type UIMessage, generateId, getToolName, isToolUIPart } from 'ai'
 import type { DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
 import type { ToolResult, ToolCallPart, CodingAgent, ToolName } from '@brocode/ai/client'
 import { isToolAllowed, MODES } from '@brocode/ai/client'
@@ -206,8 +205,6 @@ export async function sendAndReceive(
   // 用 Map 做 O(1) 查找，避免每次 delta 都遍历数组
   const partsById = new Map<string, StreamPart>()
 
-  let messageId: string | undefined
-
   const stream = parseSSE(res.body)
   const reader = stream.getReader()
 
@@ -248,7 +245,6 @@ export async function sendAndReceive(
     switch (chunk.type) {
       // ---- 流开始：重置状态 ----
       case 'start': {
-        messageId = chunk.messageId
         parts.length = 0
         partsById.clear()
         break
@@ -351,7 +347,13 @@ export async function sendAndReceive(
   }
 
   const assistantMsg: UIMessage = {
-    id: messageId ?? `msg-${Date.now()}`,
+    // Generate a fresh client-side id for every reconstructed assistant message.
+    // The server reuses the previous assistant message's id as the response id
+    // when the request's `originalMessages` ends in an assistant message (e.g.
+    // the tool-call turn in a multi-step agent loop), so trusting server
+    // `messageId` here would make two distinct assistant messages share an id
+    // and get collapsed/dropped by ChatShell's dedup.
+    id: generateId(),
     role: 'assistant',
     parts: assistantParts,
   }

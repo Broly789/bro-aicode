@@ -14,6 +14,7 @@ export {
   DEFAULT_MODEL_ID,
   getModelConfig,
   getAvailableModels,
+  isValidModelId,
   resolveModel,
   type ModelConfig,
   type ResolvedModel,

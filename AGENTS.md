@@ -151,8 +151,12 @@ OpenTUI 内置 Console Overlay，捕获所有 `console.*` 输出并显示在终�
 |--------|------|
 | `Ctrl+`` ` | 开关 console 面板 |
 | `Ctrl+L` | 清空面板日志 |
+| `Ctrl+Shift+C` | 复制面板内**选中**文本到剪贴板（需面板获得焦点且已选中） |
+| `Ctrl+A` | 复制面板**全部**内容到剪贴板（面板打开时生效，亦支持 `Ctrl+Shift+A`） |
 | `+` / `-` | 面板内调整大小（面板需获得焦点） |
 | 方向键 | 面板内滚动日志 |
+
+> 复制依赖系统剪贴板工具：macOS 用 `pbcopy`，Linux 用 `wl-copy` / `xclip`（见 `apps/cli/src/index.tsx` 的 `copyToClipboard`）。
 
 ### 配置
 

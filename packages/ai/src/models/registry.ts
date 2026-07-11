@@ -177,6 +177,11 @@ export function getModelConfig(id?: string | null): ModelConfig {
   return found
 }
 
+/** Strict check: true only when `id` is a registered model (no fallback to default). */
+export function isValidModelId(id?: string | null): boolean {
+  return !!id && MODELS.some((m) => m.id === id)
+}
+
 export function getAvailableModels(): readonly ModelConfig[] {
   return MODELS
 }

@@ -58,7 +58,6 @@ export function SessionsDialog() {
   const selectSession = useCallback(
     (item: SessionItem) => {
       navigate(`/session/${item.id}`)
-      logger('ai', item.id, item)
       setTimeout(() => close(), 0)
     },
     [navigate, close],

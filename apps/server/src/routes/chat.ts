@@ -136,10 +136,6 @@ export const chatRoute = new Hono().post(
             },
           })
 
-          await prisma.session.update({
-            where: { id: sessionId },
-            data: {},
-          })
         } catch (err) {
           console.error('Failed to persist assistant message:', err)
         }

@@ -30,13 +30,8 @@ export function Home() {
       return
     }
     if (await chatCommands(value)) return
-    const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
-    const res = await fetch(`${serverUrl}/api/sessions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ modelId: model }),
-    })
-    const { id } = (await res.json()) as { id: string }
+    const res = await client.api.sessions.$post({ json: { modelId: model } })
+    const { id } = await res.json()
     navigate(`/session/${id}`, { state: { prompt: value } })
   }
 

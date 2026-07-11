@@ -58,20 +58,13 @@ export function ModelsDialog() {
       setModel(item.id)
 
       const sessionId = extractSessionId(location.pathname)
-      console.log('[ModelsDialog] selectModel', { sessionId, pathname: location.pathname, modelId: item.id })
       if (sessionId) {
         try {
-          const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
-          const url = `${serverUrl}/api/sessions/${sessionId}/model`
-          console.log('[ModelsDialog] PATCH', url)
-          const res = await fetch(url, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ modelId: item.id }),
+          const res = await client.api.sessions[':sessionId'].model.$patch({
+            param: { sessionId },
+            json: { modelId: item.id },
           })
-          const body = await res.text()
-          console.log('[ModelsDialog] PATCH response', res.status, body)
-          if (!res.ok) console.warn('PATCH model failed', body)
+          if (!res.ok) console.warn('PATCH model failed', await res.text())
         } catch (e) {
           console.warn('PATCH model error', e)
         }

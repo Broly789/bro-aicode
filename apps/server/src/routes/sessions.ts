@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { zValidator } from '@hono/zod-validator'
 import { prisma } from '../lib/db'
-import { DEFAULT_MODEL_ID, getModelConfig } from '@brocode/ai/server'
+import { DEFAULT_MODEL_ID, isValidModelId } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 
 export const sessionsRoute = new Hono()
@@ -31,8 +31,8 @@ export const sessionsRoute = new Hono()
     })
   })
   .post('/', async (c) => {
-    const body = await c.req.json().catch(() => ({}))
-    const modelId = body?.modelId || DEFAULT_MODEL_ID
+    const body = (await c.req.json().catch(() => ({}))) as { modelId?: string }
+    const modelId = isValidModelId(body?.modelId) ? body.modelId! : DEFAULT_MODEL_ID
     const session = await prisma.session.create({ data: { modelId } })
     return c.json({ id: session.id, modelId: session.modelId }, 201)
   })
@@ -62,14 +62,13 @@ export const sessionsRoute = new Hono()
       const { sessionId } = c.req.valid('param')
       const { modelId } = c.req.valid('json')
 
-      const config = getModelConfig(modelId)
-      if (!config) {
+      if (!isValidModelId(modelId)) {
         return c.json({ success: false, error: `Unknown model: ${modelId}` }, 400)
       }
 
       const session = await prisma.session.update({
         where: { id: sessionId },
-        data: { modelId: config.id },
+        data: { modelId },
       })
 
       return c.json({ id: session.id, modelId: session.modelId })
