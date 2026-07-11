@@ -5,6 +5,7 @@ import { useModeContext } from '../lib/modes'
 import { useModelContext } from '../lib/models'
 import { SessionsDialog } from '../components/SessionsDialog'
 import { ModelsDialog } from '../components/ModelsDialog'
+import { EffortDialog } from '../components/EffortDialog'
 import { useGlobalKeyboard } from '../lib/layers'
 
 const navItems = [
@@ -54,6 +55,7 @@ export function RootLayout() {
 
       <SessionsDialog />
       <ModelsDialog />
+      <EffortDialog />
 
       {/* Footer */}
       <box

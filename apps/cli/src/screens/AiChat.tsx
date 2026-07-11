@@ -7,6 +7,7 @@ import { client } from '../lib/client'
 import { useAgentLoop } from '../lib/use-agent-loop'
 import { useModeContext } from '../lib/modes'
 import { useModelContext } from '../lib/models'
+import { useEffortContext } from '../lib/efforts'
 import { ChatShell } from '../components/chat/ChatShell'
 import { CodingAgent, DEFAULT_MODE } from '@brocode/ai/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
@@ -110,6 +111,7 @@ function AiChatInner({
   const navigate = useNavigate()
   const sentRef = useRef(false)
   const { mode, think, toggleThink } = useModeContext()
+  const { effort } = useEffortContext()
   const chatCommands = useChatCommands()
 
   useLayer('chat')
@@ -129,7 +131,7 @@ function AiChatInner({
     confirm,
     deny,
     stop,
-  } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current, think })
+  } = useAgentLoop({ sessionId, initialMessages, agent: agentRef.current, think, effort })
 
   useLayerKeyboard((event: KeyEvent) => {
     if (event.name === 'escape') {

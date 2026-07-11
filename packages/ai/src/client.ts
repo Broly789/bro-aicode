@@ -13,5 +13,10 @@ export { MODES, DEFAULT_MODE, isToolAllowed, CodingAgent, type Mode, type ModeId
 
 export { allCodingTools, getCodingToolsForMode } from './tools/toolset'
 
+export {
+  type ReasoningEffort,
+  DEFAULT_REASONING_EFFORT,
+} from './models/registry'
+
 // 确保 CLI 侧也能使用全局 logger（client.ts 被 CLI import，主入口不会）
 import './lib/logger'

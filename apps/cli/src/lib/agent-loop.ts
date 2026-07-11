@@ -1,6 +1,6 @@
 import { type UIMessage, generateId, getToolName, isToolUIPart } from 'ai'
 import type { DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
-import type { ToolResult, ToolCallPart, CodingAgent, ToolName } from '@brocode/ai/client'
+import type { ToolResult, ToolCallPart, CodingAgent, ToolName, ReasoningEffort } from '@brocode/ai/client'
 import { isToolAllowed, MODES } from '@brocode/ai/client'
 import { client } from './client'
 import { findPartByToolCallId, updatePartAtIndex } from './message-helpers'
@@ -163,6 +163,7 @@ export async function sendAndReceive(
   onStreamEvent?: (event: AgentLoopEvent) => void,
   signal?: AbortSignal,
   think: boolean = true,
+  effort?: ReasoningEffort,
 ): Promise<{
   events: AgentLoopEvent[]
   result: AgentLoopResult
@@ -173,7 +174,7 @@ export async function sendAndReceive(
     res = await client.api.chat[':sessionId'].$post(
       {
         param: { sessionId },
-        json: { messages: normalized, mode: agent.modeId, think },
+        json: { messages: normalized, mode: agent.modeId, think, effort },
       },
       { init: { signal } },
     )
@@ -405,13 +406,14 @@ export async function runAgentLoop(
   onConfirm?: (toolCall: ToolCallPart) => Promise<boolean>,
   signal?: AbortSignal,
   think: boolean = true,
+  effort?: ReasoningEffort,
 ): Promise<AgentLoopResult> {
   let messages = initialMessages
   let consecutiveToolOnlyRounds = 0   // 连续无文本输出的轮次计数
   let consecutiveAllErrorRounds = 0   // 连续全部工具失败的轮次计数
 
   for (let round = 0; round < 20; round++) {
-    const { result } = await sendAndReceive(sessionId, messages, agent, onEvent, signal, think)
+    const { result } = await sendAndReceive(sessionId, messages, agent, onEvent, signal, think, effort)
     messages = result.messages
 
     // 模型不再请求工具调用 → 本轮结束

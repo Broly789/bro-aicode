@@ -6,6 +6,12 @@ import { createAnthropic } from '@ai-sdk/anthropic'
 
 export type ProviderId = 'deepseek' | 'qwen' | 'openai' | 'anthropic'
 
+/** User-facing reasoning effort level (low / medium / high). */
+export type ReasoningEffort = 'low' | 'medium' | 'high'
+
+/** Default reasoning effort when user hasn't set one. */
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'medium'
+
 export interface ModelConfig {
   /** Unique registry id, e.g. 'deepseek-v4-flash' */
   id: string
@@ -35,7 +41,7 @@ export interface ResolvedModel {
 export const DEFAULT_MODEL_ID = 'deepseek-v4-flash'
 
 const DEEPSEEK_THINKING: Record<string, Record<string, JSONValue>> = {
-  deepseek: { thinking: { type: 'enabled' } },
+  deepseek: { thinking: { type: 'enabled' }, reasoningEffort: 'medium' },
 }
 
 const OPENAI_THINKING: Record<string, Record<string, JSONValue>> = {
@@ -248,4 +254,46 @@ export function resolveModel(id?: string | null): ResolvedModel {
   }
   modelCache.set(config.id, resolved)
   return resolved
+}
+
+/**
+ * Build thinking providerOptions for a given model and effort level.
+ *
+ * - Returns `undefined` when the model doesn't support thinking.
+ * - When `effort` is omitted, returns the default thinking options (medium).
+ * - When `effort` is provided, overrides the per-provider thinking config accordingly.
+ */
+export function getThinkingProviderOptions(
+  modelId?: string | null,
+  effort?: ReasoningEffort,
+): Record<string, Record<string, JSONValue>> | undefined {
+  const config = getModelConfig(modelId)
+  if (!config.supportsThinking) return undefined
+
+  if (!effort) return config.thinkingOptions
+
+  switch (config.provider) {
+    case 'deepseek':
+      return {
+        deepseek: {
+          thinking: { type: 'enabled' },
+          reasoningEffort: effort,
+        },
+      }
+    case 'openai':
+      return {
+        openai: { reasoningEffort: effort },
+      }
+    case 'anthropic': {
+      const budgetTokens =
+        effort === 'low' ? 512 : effort === 'high' ? 4096 : 1024
+      return {
+        anthropic: {
+          thinking: { type: 'enabled', budgetTokens },
+        },
+      }
+    }
+    default:
+      return config.thinkingOptions
+  }
 }

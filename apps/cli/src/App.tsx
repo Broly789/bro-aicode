@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router'
 import { router } from './router'
 import { ModeProvider } from './lib/modes'
 import { ModelProvider } from './lib/models'
+import { EffortProvider } from './lib/efforts'
 import { DialogProvider } from './components/dialog'
 import { ToastProvider } from './components/toast'
 import { preloadSessions } from './lib/sessions-store'
@@ -17,13 +18,15 @@ export function App() {
     <ToastProvider>
       <LayerProvider>
         <ModeProvider>
-          <ModelProvider>
-            <DialogProvider>
-              <box width="100%" height="100%">
-                <RouterProvider router={router} />
-              </box>
-            </DialogProvider>
-          </ModelProvider>
+          <EffortProvider>
+            <ModelProvider>
+              <DialogProvider>
+                <box width="100%" height="100%">
+                  <RouterProvider router={router} />
+                </box>
+              </DialogProvider>
+            </ModelProvider>
+          </EffortProvider>
         </ModeProvider>
       </LayerProvider>
     </ToastProvider>

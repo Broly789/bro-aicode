@@ -10,6 +10,7 @@ interface ModeContextValue {
   isToolAllowed: (toolName: string) => boolean
   think: boolean
   toggleThink: () => void
+  setThink: (v: boolean) => void
 }
 
 const ModeContext = createContext<ModeContextValue | null>(null)
@@ -41,7 +42,7 @@ export function ModeProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <ModeContext.Provider value={{ mode, cycleMode, isToolAllowed: checkToolAllowed, think, toggleThink }}>
+    <ModeContext.Provider value={{ mode, cycleMode, isToolAllowed: checkToolAllowed, think, toggleThink, setThink }}>
       {children}
     </ModeContext.Provider>
   )

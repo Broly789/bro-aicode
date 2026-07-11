@@ -8,9 +8,11 @@ import {
   getAvailableModels,
   isValidModelId,
   resolveModel,
+  getThinkingProviderOptions,
   type ModelConfig,
   type ResolvedModel,
   type ProviderId,
+  type ReasoningEffort,
 } from './models/registry'
 
 export { allCodingTools, getCodingToolsForMode }
@@ -23,7 +25,9 @@ export {
   getAvailableModels,
   isValidModelId,
   resolveModel,
+  getThinkingProviderOptions,
   type ModelConfig,
   type ResolvedModel,
   type ProviderId,
+  type ReasoningEffort,
 }

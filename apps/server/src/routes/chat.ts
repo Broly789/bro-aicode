@@ -10,7 +10,8 @@ import {
   validateUIMessages,
   generateId,
 } from 'ai'
-import { allCodingTools, getCodingToolsForMode, getSystemInstructions, resolveModel } from '@brocode/ai/server'
+import { allCodingTools, getCodingToolsForMode, getSystemInstructions, resolveModel, getThinkingProviderOptions } from '@brocode/ai/server'
+import type { ReasoningEffort } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
 
@@ -18,6 +19,7 @@ const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
   mode: z.enum(['build', 'plan']).optional().default('build'),
   think: z.boolean().optional().default(true),
+  effort: z.enum(['low', 'medium', 'high']).optional(),
 })
 
 const chatParamSchema = z.object({
@@ -30,7 +32,7 @@ export const chatRoute = new Hono().post(
   validateJson(chatBodySchema),
   async (c) => {
     const { sessionId } = c.req.valid('param')
-    const { messages, mode, think } = c.req.valid('json')
+    const { messages, mode, think, effort } = c.req.valid('json')
 
     const session = await prisma.session.findUnique({
       where: { id: sessionId },
@@ -40,7 +42,7 @@ export const chatRoute = new Hono().post(
     }
 
     const resolved = resolveModel(session.modelId)
-    console.log(`[CHAT] session="${sessionId}" model="${resolved.config.id}" provider=${resolved.config.provider}`)
+    console.log(`[CHAT] session="${sessionId}" model="${resolved.config.id}" provider=${resolved.config.provider} think=${think} effort=${effort ?? 'default'}`)
 
     // Strip undefined values from parts before validation (Zod strict mode rejects explicit undefined)
     const cleanedMessages = (messages ?? []).map((msg: any) => {
@@ -93,7 +95,7 @@ export const chatRoute = new Hono().post(
       messages: modelMessages,
       tools: getCodingToolsForMode(mode),
       stopWhen: isStepCount(20),
-      providerOptions: think ? resolved.thinkingProviderOptions ?? {} : {},
+      providerOptions: think ? getThinkingProviderOptions(session.modelId, effort as ReasoningEffort | undefined) ?? {} : {},
       onFinish: async ({ text, toolCalls, finalStep }) => {
         const parts: Array<object> = []
         const reasoningText = finalStep.reasoningText

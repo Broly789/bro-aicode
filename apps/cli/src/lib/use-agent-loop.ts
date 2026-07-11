@@ -3,7 +3,7 @@ import type { UIMessage } from 'ai'
 import type { AgentLoopEvent } from './agent-loop'
 import { runAgentLoop } from './agent-loop'
 import { executeTool, needsConfirmation } from '@brocode/ai/client'
-import type { ToolCallPart, CodingAgent } from '@brocode/ai/client'
+import type { ToolCallPart, CodingAgent, ReasoningEffort } from '@brocode/ai/client'
 import {
   ensureAssistantLast,
   findPartByToolCallId,
@@ -36,11 +36,13 @@ export function useAgentLoop({
   initialMessages,
   agent,
   think,
+  effort,
 }: {
   sessionId: string
   initialMessages: UIMessage[]
   agent: CodingAgent
   think: boolean
+  effort?: ReasoningEffort
 }) {
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages)
   const [status, setStatus] = useState<AgentLoopStatus>('ready')
@@ -68,6 +70,10 @@ export function useAgentLoop({
   // 用 ref 保持 think 的最新值
   const thinkRef = useRef(think)
   thinkRef.current = think
+
+  // 用 ref 保持 effort 的最新值
+  const effortRef = useRef(effort)
+  effortRef.current = effort
 
   /**
    * 发送用户消息并启动 agent 循环。
@@ -229,6 +235,7 @@ export function useAgentLoop({
           },
           controller.signal,
           thinkRef.current,
+          effortRef.current,
         )
 
         // 循环结束，用最终消息列表覆盖流式更新的消息

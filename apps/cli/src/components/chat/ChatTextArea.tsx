@@ -7,11 +7,12 @@ import {
 } from '@opentui/core'
 import { useModeContext } from '../../lib/modes'
 import { useModelContext } from '../../lib/models'
+import { useEffortContext } from '../../lib/efforts'
 import { CommandList } from '../CommandList'
 import { useCommandPopover } from '../../hooks/use-command-popover'
 import { useFileMention } from '../../hooks/use-file-mention'
 import { FileMentionList } from '../FileMentionList'
-import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
+import { useLayerFocus, useLayerKeyboard, getTopLayerId } from '../../lib/layers'
 import { useRenderer } from '@opentui/react'
 import { EmptyBorder } from '../border'
 
@@ -49,6 +50,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   const renderer = useRenderer()
   const { mode, think } = useModeContext()
   const { model } = useModelContext()
+  const { effort } = useEffortContext()
   const isTopLayer = useLayerFocus(layerId)
 
   const {
@@ -93,6 +95,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   useEffect(() => {
     const handler = (event: KeyEvent) => {
       if (event.name === 'escape') {
+        if (getTopLayerId() !== 'home') return
         event.preventDefault()
         event.stopPropagation()
         handleEscape()
@@ -249,6 +252,11 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
           <text fg="#CCC" attributes={TextAttributes.DIM}>
             {model}
           </text>
+          {think && (
+            <text fg="#FFF" attributes={TextAttributes.BOLD}>
+              effort:{effort}
+            </text>
+          )}
         </box>
         <text fg="#AAA" attributes={TextAttributes.DIM}>
           Shift+Enter newline

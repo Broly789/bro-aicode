@@ -23,15 +23,10 @@ const systemCommandMap: Readonly<Record<SystemCommandName, CommandItem>> = {
     description: 'Start a new session',
     action: async (navigate) => {
       const { getCurrentModel } = await import('../lib/models')
-      const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
-      const res = await fetch(`${serverUrl}/api/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modelId: getCurrentModel() }),
-      })
-      const { id } = (await res.json()) as { id: string };
-      navigate(`/session/${id}`);
-      return undefined;
+      const res = await client.api.sessions.$post({ json: { modelId: getCurrentModel() } })
+      const { id } = await res.json()
+      navigate(`/session/${id}`)
+      return undefined
     },
   },
   '/exit': {
@@ -133,6 +128,11 @@ export async function handleCommand(
 
   if (inputCmd === '/models') {
     actions?.openDialog?.('Models')
+    return true
+  }
+
+  if (inputCmd === '/effort') {
+    actions?.openDialog?.('Effort')
     return true
   }
 
