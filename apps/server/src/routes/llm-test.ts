@@ -1,10 +1,10 @@
 import { Hono } from 'hono'
 import { createUIMessageStreamResponse, streamText, toUIMessageStream } from 'ai'
-import { deepseek } from '@ai-sdk/deepseek'
+import { resolveModel, DEFAULT_MODEL_ID } from '@brocode/ai/server'
 
 export const llmTestRoute = new Hono().post('/', async (c) => {
   const result = streamText({
-    model: deepseek('deepseek-v4-flash'),
+    model: resolveModel(DEFAULT_MODEL_ID).model,
     prompt: 'Hello, world!',
   })
 

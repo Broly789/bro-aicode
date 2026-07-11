@@ -28,13 +28,20 @@ const modeInstructions: Record<ModeIds, string> = {
     'Provide analysis, recommendations, and step-by-step plans without making changes.\n',
 }
 
+const instructionsCache = new Map<string, string>()
+
 /**
  * 根据模式返回系统指令。
  * BUILD: 全工具访问，可读写执行。
  * PLAN: 只读分析/规划，禁止写操作。
+ * 结果按 mode 缓存，避免每次请求重复拼接。
  */
 export function getSystemInstructions(modeId?: ModeIds): string {
   const mode = MODES.find((m) => m.id === modeId) ?? DEFAULT_MODE
+  const cached = instructionsCache.get(mode.id)
+  if (cached) return cached
   const extra = modeInstructions[mode.id] ?? ''
-  return baseInstructions + extra
+  const result = baseInstructions + extra
+  instructionsCache.set(mode.id, result)
+  return result
 }

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { DialogOverlay, Dialog, useDialog } from './dialog'
+import { logger } from '@brocode/ai'
 import {
   useSessions,
   refreshSessions,
@@ -41,21 +42,18 @@ function truncate(text: string, maxLen: number): string {
 }
 
 export function SessionsDialog() {
-  const { isOpen, close } = useDialog()
+  const { isOpen, close, title } = useDialog()
   const navigate = useNavigate()
   const { sessions } = useSessions()
-  const wasOpen = useRef(false)
   const [resetKey, setResetKey] = useState(0)
 
-  if (isOpen && !wasOpen.current) {
-    wasOpen.current = true
-    setResetKey((k) => k + 1)
-  }
-  if (!isOpen) wasOpen.current = false
+  const open = isOpen && title === 'Sessions'
 
   useEffect(() => {
-    if (isOpen) refreshSessions()
-  }, [isOpen])
+    if (!open) return
+    setResetKey((k) => k + 1)
+    refreshSessions()
+  }, [open])
 
   const selectSession = useCallback(
     (item: SessionItem) => {
@@ -96,7 +94,7 @@ export function SessionsDialog() {
     [],
   )
 
-  if (!isOpen) return null
+  if (!open) return null
 
   return (
     <DialogOverlay>

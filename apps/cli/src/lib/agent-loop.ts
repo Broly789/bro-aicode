@@ -3,6 +3,7 @@ import { getToolName, isToolUIPart } from 'ai'
 import type { DynamicToolUIPart, ToolUIPart, UITools } from 'ai'
 import type { ToolResult, ToolCallPart, CodingAgent, ToolName } from '@brocode/ai/client'
 import { isToolAllowed, MODES } from '@brocode/ai/client'
+import { client } from './client'
 import { findPartByToolCallId, updatePartAtIndex } from './message-helpers'
 
 type AnyToolUIPart = ToolUIPart<UITools> | DynamicToolUIPart
@@ -157,7 +158,7 @@ type StreamPart = {
  * @returns 所有事件记录 + 更新后的消息列表
  */
 export async function sendAndReceive(
-  apiUrl: string,
+  sessionId: string,
   messages: UIMessage[],
   agent: CodingAgent,
   onStreamEvent?: (event: AgentLoopEvent) => void,
@@ -170,12 +171,13 @@ export async function sendAndReceive(
   let res: Response
   try {
     const normalized = normalizeToolParts(messages)
-    res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: normalized, mode: agent.modeId, think }),
-      signal,
-    })
+    res = await client.api.chat[':sessionId'].$post(
+      {
+        param: { sessionId },
+        json: { messages: normalized, mode: agent.modeId, think },
+      },
+      { init: { signal } },
+    )
   } catch (err) {
     if (signal?.aborted) {
       return {
@@ -190,7 +192,7 @@ export async function sendAndReceive(
     const text = await res.text().catch(() => 'Unknown error')
     try {
       const body = JSON.parse(text)
-      console.log('[SERVER ERROR]', JSON.stringify({ status: res.status, url: apiUrl, body }, null, 2))
+      console.log('[SERVER ERROR]', JSON.stringify({ status: res.status, sessionId, body }, null, 2))
     } catch {
       console.log('[SERVER ERROR]', text)
     }
@@ -392,7 +394,7 @@ function insertFallback(messages: UIMessage[], text: string): UIMessage[] {
  * @param onConfirm    需要确认时的回调，返回用户是否批准
  */
 export async function runAgentLoop(
-  apiUrl: string,
+  sessionId: string,
   initialMessages: UIMessage[],
   agent: CodingAgent,
   executeFn: (part: ToolCallPart) => Promise<ToolResult>,
@@ -407,7 +409,7 @@ export async function runAgentLoop(
   let consecutiveAllErrorRounds = 0   // 连续全部工具失败的轮次计数
 
   for (let round = 0; round < 20; round++) {
-    const { result } = await sendAndReceive(apiUrl, messages, agent, onEvent, signal, think)
+    const { result } = await sendAndReceive(sessionId, messages, agent, onEvent, signal, think)
     messages = result.messages
 
     // 模型不再请求工具调用 → 本轮结束

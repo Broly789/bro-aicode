@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:server": "bun run --filter @brocode/server dev",
+    "dev:server": "bun run --hot apps/server/src/index.ts",
     "dev:cli": "PROJECT_ROOT=$PWD bun run --cwd \"$PWD/apps/cli\" dev",
     "dev:debug": "bun run --cwd \"$PWD/apps/cli\" dev 2> debug.log",
     "dev": "bun run dev:server & bun run dev:cli",

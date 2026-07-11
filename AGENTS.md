@@ -455,3 +455,17 @@ Logger 用法见上方 [Logger 用法](#logger-用法) 章节。
 | `packages/ai/src/instructions.ts` | System prompt (tells AI to use search, not fetch-url after) |
 | `packages/ai/src/tools/runners.ts` | Maps `search` → `runSearch` for CLI execution |
 | `apps/cli/src/components/chat/ChatMessage.tsx` | UI rendering of search source label |
+
+## Agent skills
+
+### Issue tracker
+
+Issues live on GitHub. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default five-role vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context layout (root `CONTEXT-MAP.md` pointing to per-package `CONTEXT.md` files under `apps/*` and `packages/*`). System-wide ADRs in `docs/adr/`, context-scoped ADRs in each package's `docs/adr/`. See `docs/agents/domain.md`.

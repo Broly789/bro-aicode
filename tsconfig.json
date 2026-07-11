@@ -9,6 +9,9 @@
     "types": ["bun"],
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "paths": {
+      "@brocode/server": ["./apps/server/src/index.ts"]
+    }
   }
 }

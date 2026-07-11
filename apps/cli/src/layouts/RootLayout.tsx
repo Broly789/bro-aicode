@@ -2,7 +2,9 @@ import { TextAttributes, type KeyEvent } from '@opentui/core'
 import { useRenderer } from '@opentui/react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { useModeContext } from '../lib/modes'
+import { useModelContext } from '../lib/models'
 import { SessionsDialog } from '../components/SessionsDialog'
+import { ModelsDialog } from '../components/ModelsDialog'
 import { useGlobalKeyboard } from '../lib/layers'
 
 const navItems = [
@@ -15,6 +17,7 @@ export function RootLayout() {
   const navigate = useNavigate()
   const location = useLocation()
   const { mode, cycleMode } = useModeContext()
+  const { model } = useModelContext()
 
   useGlobalKeyboard((event: KeyEvent) => {
     if (event.name === 'h' && event.shift) navigate('/')
@@ -50,6 +53,7 @@ export function RootLayout() {
       </box>
 
       <SessionsDialog />
+      <ModelsDialog />
 
       {/* Footer */}
       <box
@@ -80,6 +84,9 @@ export function RootLayout() {
         <box flexDirection="row" gap={2}>
           <text fg="#AAA" attributes={TextAttributes.DIM}>
             [Tab] Mode
+          </text>
+          <text fg="#00FFFF" attributes={TextAttributes.DIM}>
+            model: {model}
           </text>
           <text fg="#AAA" attributes={TextAttributes.DIM}>
             [Esc] Back

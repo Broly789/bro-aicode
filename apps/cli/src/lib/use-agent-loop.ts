@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
 import type { UIMessage } from 'ai'
-import { client } from './client'
 import type { AgentLoopEvent } from './agent-loop'
 import { runAgentLoop } from './agent-loop'
 import { executeTool, needsConfirmation } from '@brocode/ai/client'
@@ -70,11 +69,6 @@ export function useAgentLoop({
   const thinkRef = useRef(think)
   thinkRef.current = think
 
-  // 通过 Hono RPC 类型安全地构建 API URL
-  const apiUrl = client.api.chat[':sessionId']
-    .$url({ param: { sessionId } })
-    .toString()
-
   /**
    * 发送用户消息并启动 agent 循环。
    *
@@ -110,7 +104,7 @@ export function useAgentLoop({
         const assistantIdRef = { current: `msg-${Date.now()}-stream` }
 
         const result = await runAgentLoop(
-          apiUrl,
+          sessionId,
           currentMessages,
           agentRef.current,
           executeTool,
@@ -253,7 +247,7 @@ export function useAgentLoop({
         invalidateSessions()
       }
     },
-    [apiUrl],
+    [sessionId],
   )
 
   /** 用户点击确认按钮：resolve 等待中的 Promise，恢复 agent 循环 */

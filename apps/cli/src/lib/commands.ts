@@ -22,7 +22,13 @@ const systemCommandMap: Readonly<Record<SystemCommandName, CommandItem>> = {
   '/new': {
     description: 'Start a new session',
     action: async (navigate) => {
-      const res = await client.api.sessions.$post({});
+      const { getCurrentModel } = await import('../lib/models')
+      const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
+      const res = await fetch(`${serverUrl}/api/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId: getCurrentModel() }),
+      })
       const { id } = (await res.json()) as { id: string };
       navigate(`/session/${id}`);
       return undefined;
@@ -59,10 +65,7 @@ const systemCommandMap: Readonly<Record<SystemCommandName, CommandItem>> = {
   },
   '/models': {
     description: 'Switch model',
-    action: (navigate) => {
-      navigate('/settings');
-      return undefined;
-    },
+    action: () => undefined,
   },
   '/move': {
     description: 'Move the session to another project directory',
@@ -125,6 +128,11 @@ export async function handleCommand(
 
   if (inputCmd === '/sessions') {
     actions?.openDialog?.('Sessions')
+    return true
+  }
+
+  if (inputCmd === '/models') {
+    actions?.openDialog?.('Models')
     return true
   }
 

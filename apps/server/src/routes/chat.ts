@@ -10,12 +10,9 @@ import {
   validateUIMessages,
   generateId,
 } from 'ai'
-import { deepseek } from '@ai-sdk/deepseek'
-import { allCodingTools, getCodingToolsForMode, getSystemInstructions, type ModeIds } from '@brocode/ai/server'
+import { allCodingTools, getCodingToolsForMode, getSystemInstructions, resolveModel } from '@brocode/ai/server'
 import { validateJson } from '../lib/validate'
 import { prisma } from '../lib/db'
-
-const MODEL = process.env.AI_MODEL ?? 'deepseek-v4-flash'
 
 const chatBodySchema = z.object({
   messages: z.array(z.unknown()),
@@ -41,6 +38,9 @@ export const chatRoute = new Hono().post(
     if (!session) {
       return c.json({ success: false, error: 'Session not found' }, 404)
     }
+
+    const resolved = resolveModel(session.modelId)
+    console.log(`[CHAT] session="${sessionId}" model="${resolved.config.id}" provider=${resolved.config.provider}`)
 
     // Strip undefined values from parts before validation (Zod strict mode rejects explicit undefined)
     const cleanedMessages = (messages ?? []).map((msg: any) => {
@@ -88,14 +88,12 @@ export const chatRoute = new Hono().post(
     )
 
     const result = streamText({
-      model: deepseek(MODEL),
+      model: resolved.model,
       system: getSystemInstructions(mode),
       messages: modelMessages,
       tools: getCodingToolsForMode(mode),
       stopWhen: isStepCount(20),
-      providerOptions: think
-        ? { deepseek: { thinking: { type: 'enabled' } } }
-        : {},
+      providerOptions: think ? resolved.thinkingProviderOptions ?? {} : {},
       onFinish: async ({ text, toolCalls, finalStep }) => {
         const parts: Array<object> = []
         const reasoningText = finalStep.reasoningText
@@ -129,12 +127,12 @@ export const chatRoute = new Hono().post(
               role: 'assistant',
               content: displayContent,
               parts,
-              model: MODEL,
+              model: resolved.config.id,
             },
             update: {
               content: displayContent,
               parts,
-              model: MODEL,
+              model: resolved.config.id,
             },
           })
 

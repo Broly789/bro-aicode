@@ -7,6 +7,7 @@ import { client } from '../lib/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
 import { useLayer } from '../lib/layers'
 import { useModeContext } from '../lib/modes'
+import { useModelContext } from '../lib/models'
 
 const HomeRouteState = z.object({
   sessionExpired: z.boolean().default(false),
@@ -17,6 +18,7 @@ export function Home() {
   const location = useLocation()
   const chatCommands = useChatCommands()
   const { toggleThink } = useModeContext()
+  const { model } = useModelContext()
   useLayer('home')
 
   const { sessionExpired } = HomeRouteState.parse(location.state ?? {})
@@ -28,7 +30,12 @@ export function Home() {
       return
     }
     if (await chatCommands(value)) return
-    const res = await client.api.sessions.$post({})
+    const serverUrl = process.env.SERVER_URL ?? 'http://localhost:3000'
+    const res = await fetch(`${serverUrl}/api/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ modelId: model }),
+    })
     const { id } = (await res.json()) as { id: string }
     navigate(`/session/${id}`, { state: { prompt: value } })
   }

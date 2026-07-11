@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { client } from '../lib/client'
 import { useAgentLoop } from '../lib/use-agent-loop'
 import { useModeContext } from '../lib/modes'
+import { useModelContext } from '../lib/models'
 import { ChatShell } from '../components/chat/ChatShell'
 import { CodingAgent, DEFAULT_MODE } from '@brocode/ai/client'
 import { useChatCommands } from '../hooks/use-chat-commands'
@@ -22,6 +23,7 @@ export function AiChat() {
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | null>(
     null,
   )
+  const { setModel } = useModelContext()
 
   const { prompt } = ChatRouteState.parse(location.state ?? {})
 
@@ -48,8 +50,10 @@ export function AiChat() {
         }
         const data = (await res.json()) as {
           messages: Array<Record<string, unknown>>
+          modelId?: string
         }
         if (cancelled) return
+        if (data.modelId) setModel(data.modelId)
         setInitialMessages(
           data.messages.map((m) => ({
             id: m.id as string,

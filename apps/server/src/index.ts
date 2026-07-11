@@ -3,6 +3,8 @@ import { appendFile } from 'node:fs/promises'
 import { chatRoute } from './routes/chat'
 import { llmTestRoute } from './routes/llm-test'
 import { sessionsRoute } from './routes/sessions'
+import { modelsRoute } from './routes/models'
+import { healthRoute } from './routes/health'
 
 const app = new Hono()
 
@@ -35,6 +37,8 @@ const route = app
   .route('/api/chat', chatRoute)
   .route('/api/llm-test', llmTestRoute)
   .route('/api/sessions', sessionsRoute)
+  .route('/api/models', modelsRoute)
+  .route('/health', healthRoute)
 
 const server = Bun.serve({
   fetch: app.fetch,

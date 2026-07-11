@@ -3,12 +3,13 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
   output   = "../generated"
 }
 
 model Session {
   id        String    @id @default(uuid())
+  modelId   String    @default("deepseek-v4-flash")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   messages  Message[]

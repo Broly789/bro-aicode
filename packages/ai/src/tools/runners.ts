@@ -56,7 +56,7 @@ export async function executeTool(
   if (!runner) return { ok: false, error: `Unknown tool: ${part.toolName}` }
   try {
     const output = await runner(part.input, projectRoot)
-    console.error(`[tool] ${part.toolName} completed, output type: ${JSON.stringify(output, null, 2)}`)
+    console.log(`[tool] ${part.toolName} completed, output type: ${JSON.stringify(output, null, 2)}`)
     return { ok: true, output }
   } catch (err) {
     return {

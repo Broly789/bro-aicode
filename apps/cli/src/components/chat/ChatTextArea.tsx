@@ -6,6 +6,7 @@ import {
   TextAttributes,
 } from '@opentui/core'
 import { useModeContext } from '../../lib/modes'
+import { useModelContext } from '../../lib/models'
 import { CommandList } from '../CommandList'
 import { useCommandPopover } from '../../hooks/use-command-popover'
 import { useFileMention } from '../../hooks/use-file-mention'
@@ -13,8 +14,6 @@ import { FileMentionList } from '../FileMentionList'
 import { useLayerFocus, useLayerKeyboard } from '../../lib/layers'
 import { useRenderer } from '@opentui/react'
 import { EmptyBorder } from '../border'
-
-const MODEL = process.env.AI_MODEL ?? 'unknown'
 
 export const TEXTAREA_KEY_BINDINGS: KeyBinding[] = [
   { name: 'return', action: 'submit' },
@@ -49,6 +48,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
   const textareaRef = useRef<TextareaRenderable>(null)
   const renderer = useRenderer()
   const { mode, think } = useModeContext()
+  const { model } = useModelContext()
   const isTopLayer = useLayerFocus(layerId)
 
   const {
@@ -247,7 +247,7 @@ export function ChatTextArea({ onSubmit, disabled = false, layerId = 'home' }: T
             {think ? 'think:on' : 'think:off'}
           </text>
           <text fg="#CCC" attributes={TextAttributes.DIM}>
-            {MODEL}
+            {model}
           </text>
         </box>
         <text fg="#AAA" attributes={TextAttributes.DIM}>
