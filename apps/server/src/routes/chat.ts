@@ -87,6 +87,7 @@ export const chatRoute = new Hono().post(
 
     const modelMessages = await convertToModelMessages(
       validatedMessages.map(({ id, ...message }) => message),
+      { ignoreIncompleteToolCalls: true },
     )
 
     const result = streamText({
@@ -95,7 +96,7 @@ export const chatRoute = new Hono().post(
       messages: modelMessages,
       tools: getCodingToolsForMode(mode),
       stopWhen: isStepCount(20),
-      providerOptions: think ? getThinkingProviderOptions(session.modelId, effort as ReasoningEffort | undefined) ?? {} : {},
+      providerOptions: think ? getThinkingProviderOptions(resolved.config, effort as ReasoningEffort | undefined) ?? {} : {},
       onFinish: async ({ text, toolCalls, finalStep }) => {
         const parts: Array<object> = []
         const reasoningText = finalStep.reasoningText

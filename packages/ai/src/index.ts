@@ -16,6 +16,7 @@ export {
   getAvailableModels,
   isValidModelId,
   resolveModel,
+  clearModelCache,
   getThinkingProviderOptions,
   type ModelConfig,
   type ResolvedModel,

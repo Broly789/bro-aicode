@@ -5,6 +5,9 @@ import type { ToastFunction } from '../components/toast';
 import { client } from './client';
 import { CHAT_COMMANDS } from './chat-commands';
 
+// ── Dialog trigger debounce ─────────────────────────────────────────
+let lastDialogCall = 0
+
 // ====================== 基础通用类型 ======================
 type CommandAction = (
   navigate: NavigateFunction,
@@ -121,18 +124,19 @@ export async function handleCommand(
 
   const targetCommand = ALL_COMMANDS[inputCmd];
 
-  if (inputCmd === '/sessions') {
-    actions?.openDialog?.('Sessions')
-    return true
+  // Debounce dialog-triggering commands to prevent rapid re-triggers
+  // before the dialog has a chance to render.
+  const DIALOG_COMMANDS: Record<string, string> = {
+    '/sessions': 'Sessions',
+    '/models': 'Models',
+    '/effort': 'Effort',
   }
-
-  if (inputCmd === '/models') {
-    actions?.openDialog?.('Models')
-    return true
-  }
-
-  if (inputCmd === '/effort') {
-    actions?.openDialog?.('Effort')
+  const dialogTitle = DIALOG_COMMANDS[inputCmd]
+  if (dialogTitle) {
+    const now = Date.now()
+    if (now - lastDialogCall < 300) return true
+    lastDialogCall = now
+    actions?.openDialog?.(dialogTitle)
     return true
   }
 

@@ -31,6 +31,7 @@ export function ModelsDialog() {
   const [resetKey, setResetKey] = useState(0)
   const [models, setModels] = useState<ModelItem[]>([])
   const [loading, setLoading] = useState(false)
+  const [selecting, setSelecting] = useState(false)
 
   const open = isOpen && title === 'Models'
 
@@ -39,6 +40,7 @@ export function ModelsDialog() {
     setResetKey((k) => k + 1)
     setLoading(true)
     setModels([])
+    setSelecting(false)
     client.api.models
       .$get()
       .then(async (res) => {
@@ -55,6 +57,7 @@ export function ModelsDialog() {
         toast(`No API key — add ${item.provider.toUpperCase()}_API_KEY to .env.local`, { title: 'Models' })
         return
       }
+      setSelecting(true)
       setModel(item.id)
 
       const sessionId = extractSessionId(location.pathname)
@@ -64,14 +67,24 @@ export function ModelsDialog() {
             param: { sessionId },
             json: { modelId: item.id },
           })
-          if (!res.ok) console.warn('PATCH model failed', await res.text())
+          if (!res.ok) {
+            const text = await res.text()
+            console.warn('PATCH model failed', text)
+            toast.error(`Failed to switch model`, { title: 'Models', description: text })
+            setSelecting(false)
+            return
+          }
         } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e)
           console.warn('PATCH model error', e)
+          toast.error('Network error switching model', { title: 'Models', description: msg })
+          setSelecting(false)
+          return
         }
       }
 
       toast(`Model set to ${item.label}`, { title: 'Models' })
-      setTimeout(() => close(), 0)
+      close()
     },
     [setModel, close, location.pathname],
   )
@@ -124,6 +137,10 @@ export function ModelsDialog() {
       <Dialog title="Models" maxWidth={70}>
         {loading ? (
           <text attributes={TextAttributes.DIM}>Loading models…</text>
+        ) : selecting ? (
+          <box flexDirection="column" gap={1}>
+            <text attributes={TextAttributes.DIM}>Switching model…</text>
+          </box>
         ) : (
           <DialogSearchList
             key={resetKey}

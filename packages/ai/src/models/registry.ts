@@ -215,26 +215,43 @@ function resolveBaseURL(config: ModelConfig): string | undefined {
 }
 
 // ── Cache: avoids re-reading env + re-instantiating providers on every request ──
-const modelCache = new Map<string, ResolvedModel>()
+
+/** Snapshot of the env values used to create a model instance. */
+interface EnvSnapshot {
+  apiKey: string | undefined
+  baseURL: string | undefined
+}
+
+/** Cached entry keyed by model config id. */
+interface CacheEntry {
+  model: LanguageModel
+  env: EnvSnapshot
+}
+
+const modelCache = new Map<string, CacheEntry>()
 
 export function resolveModel(id?: string | null): ResolvedModel {
   const config = getModelConfig(id)
-  const cached = modelCache.get(config.id)
-
-  if (cached)  return cached
-
   const apiKey = process.env[config.apiKeyEnv]
   const baseURL = resolveBaseURL(config)
 
+  const cached = modelCache.get(config.id)
+  if (
+    cached &&
+    cached.env.apiKey === apiKey &&
+    cached.env.baseURL === baseURL
+  ) {
+    return {
+      config,
+      model: cached.model,
+      thinkingProviderOptions: config.supportsThinking ? config.thinkingOptions : undefined,
+    }
+  }
 
   let model: LanguageModel
   switch (config.provider) {
     case 'deepseek':
-      // model = deepseek(config.modelId)
-      model = createDeepSeek({
-        apiKey,
-        baseURL,
-      })(config.modelId)
+      model = createDeepSeek({ apiKey, baseURL })(config.modelId)
       break
     case 'openai':
       model = createOpenAI({ apiKey })(config.modelId)
@@ -247,27 +264,31 @@ export function resolveModel(id?: string | null): ResolvedModel {
       break
   }
 
-  const resolved: ResolvedModel = {
+  modelCache.set(config.id, { model, env: { apiKey, baseURL } })
+  return {
     config,
     model,
     thinkingProviderOptions: config.supportsThinking ? config.thinkingOptions : undefined,
   }
-  modelCache.set(config.id, resolved)
-  return resolved
+}
+
+export function clearModelCache(): void {
+  modelCache.clear()
 }
 
 /**
- * Build thinking providerOptions for a given model and effort level.
+ * Build thinking providerOptions for a given model config and effort level.
  *
  * - Returns `undefined` when the model doesn't support thinking.
  * - When `effort` is omitted, returns the default thinking options (medium).
  * - When `effort` is provided, overrides the per-provider thinking config accordingly.
+ *
+ * Accepts a pre-resolved ModelConfig to avoid duplicate MODELS.find lookups.
  */
 export function getThinkingProviderOptions(
-  modelId?: string | null,
+  config: ModelConfig,
   effort?: ReasoningEffort,
 ): Record<string, Record<string, JSONValue>> | undefined {
-  const config = getModelConfig(modelId)
   if (!config.supportsThinking) return undefined
 
   if (!effort) return config.thinkingOptions
