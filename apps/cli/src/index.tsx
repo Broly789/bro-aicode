@@ -30,9 +30,11 @@ const projectRoot = process.env.PROJECT_ROOT || findProjectRoot(START_CWD)
 process.env.PROJECT_ROOT = projectRoot
 console.log(`[brocode] PROJECT_ROOT=${projectRoot} CWD=${START_CWD} SERVER_URL=${process.env.SERVER_URL ?? 'http://localhost:3000'}`)
 
-const envPath = join(projectRoot, '.env.local')
-if (existsSync(envPath)) {
-  const text = await Bun.file(envPath).text()
+// ── .env.local 加载（优先级：.zshrc > 项目目录 > brocode 安装目录）──
+// .zshrc 里的 export 在进程启动时已进入 process.env，不会被覆盖。
+async function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return
+  const text = await Bun.file(filePath).text()
   for (const line of text.split('\n')) {
     const trimmed = line.trim()
     if (!trimmed || trimmed.startsWith('#')) continue
@@ -45,6 +47,9 @@ if (existsSync(envPath)) {
     }
   }
 }
+
+await loadEnvFile(join(projectRoot, '.env.local'))                       // 项目目录（用户自己的配置）
+await loadEnvFile(join(import.meta.dir, '..', '.env.local'))             // brocode 安装目录（API keys 兜底）
 
 // Server health check (non-blocking warning)
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000'

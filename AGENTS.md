@@ -55,6 +55,22 @@ Prisma schema lives in `packages/database/prisma/schema.prisma`. Generated clien
 4. `onFinish` callback saves assistant messages (text + reasoning + tool calls/results) to DB
 5. Messages store `parts` as JSON (`UIMessagePart[]`) — source of truth for the conversation
 
+## Bootstrap & env loading
+
+Global `brocode` command auto-loads `.env.local` with cascade priority:
+
+1. **`.zshrc` / shell exports** — highest priority, already in `process.env` before script starts
+2. **`PROJECT_ROOT/.env.local`** — the auto-detected project root (your project's own config)
+3. **Brocode install dir `.env.local`** — `join(import.meta.dir, '..', '.env.local')` → symlinks to monorepo root, provides API keys (`TAVILY_API_KEY`, `BAIDU_API_KEY`) as fallback
+
+Each level only sets variables NOT already in `process.env`. So `.zshrc` exports always win, and the two `.env.local` files fill in gaps.
+
+Implementation in `apps/cli/src/index.tsx`:
+```ts
+await loadEnvFile(join(projectRoot, '.env.local'))
+await loadEnvFile(join(import.meta.dir, '..', '.env.local'))
+```
+
 ## Quirks
 
 - **No CI / tests / lint / typecheck** — project is scaffold-only. The `build` script will fail due to `@opentui/core` missing cross-platform native binaries (known issue, not a breakage).
