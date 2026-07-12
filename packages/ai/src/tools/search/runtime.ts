@@ -317,11 +317,8 @@ async function searchScraper(query: string): Promise<{ source: string; url: stri
   const q = encodeURIComponent(query)
 
   const engines: [string, string][] = [
-    ['bing', (process.env.SCRAPER_URL_BING || 'https://www.bing.com/search?q={q}&cc=cn').replace('{q}', q)],
-    ['duckduckgo', (process.env.SCRAPER_URL_DUCKDUCKGO || 'https://html.duckduckgo.com/html/?q={q}').replace('{q}', q)],
-    ['baidu', (process.env.SCRAPER_URL_BAIDU || 'https://www.baidu.com/s?wd={q}').replace('{q}', q)],
-    ['sogou', (process.env.SCRAPER_URL_SOGOU || 'https://www.sogou.com/web?query={q}').replace('{q}', q)],
-    ['google', (process.env.SCRAPER_URL_GOOGLE || 'https://www.google.com/search?q={q}&hl=zh-CN').replace('{q}', q)],
+    ['bing', 'https://www.bing.com/search?q={q}&cc=cn'.replace('{q}', q)],
+    ['sogou', 'https://www.sogou.com/web?query={q}'.replace('{q}', q)],
   ]
 
   for (const [label, url] of engines) {

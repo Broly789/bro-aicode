@@ -431,15 +431,6 @@ BAIDU_API_KEY="bce-v3/..."
 SEARCH_PRIORITY=
 # SEARCH_LOG: true = enable file logging, false or empty = disable
 SEARCH_LOG=true
-# 搜索 API 地址（一般无需修改）
-SEARCH_URL_TAVILY="https://api.tavily.com/search"
-SEARCH_URL_BAIDU="https://qianfan.baidubce.com/v2/ai_search/web_search"
-# 兜底爬虫 URL（{q} 会被替换为搜索词）
-SCRAPER_URL_BING="https://www.bing.com/search?q={q}&cc=cn"
-SCRAPER_URL_DUCKDUCKGO="https://html.duckduckgo.com/html/?q={q}"
-SCRAPER_URL_BAIDU="https://www.baidu.com/s?wd={q}"
-SCRAPER_URL_SOGOU="https://www.sogou.com/web?query={q}"
-SCRAPER_URL_GOOGLE="https://www.google.com/search?q={q}&hl=zh-CN"
 ```
 
 **Smart routing** (default): Chinese queries → Baidu first, English → Tavily first.  
