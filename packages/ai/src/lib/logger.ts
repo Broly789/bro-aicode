@@ -1,10 +1,14 @@
 import { appendFileSync, mkdirSync } from 'fs'
 import { join } from 'path'
 
-const LOG_DIR = join(process.env.PROJECT_ROOT || process.cwd(), 'logs')
-try { mkdirSync(LOG_DIR, { recursive: true }) } catch {}
-
 const LOG_ENABLED = (process.env.SEARCH_LOG || '').toLowerCase() === 'true'
+
+function getLogDir(): string {
+  return join(process.env.PROJECT_ROOT || process.cwd(), 'logs')
+}
+
+// Ensure log directory exists at import time (best-effort, uses current cwd)
+try { mkdirSync(getLogDir(), { recursive: true }) } catch {}
 
 /**
  * 通用日志模块。
@@ -36,7 +40,7 @@ export function logger(module: string, tagOrMsg: unknown, entity?: unknown) {
   })
   const line = `[${now}] [${module}] ${text}\n`
   if (LOG_ENABLED) {
-    const logFile = join(LOG_DIR, `${module}.log`)
+    const logFile = join(getLogDir(), `${module}.log`)
     try { appendFileSync(logFile, line) } catch {}
   }
   console.log(line.trimEnd())

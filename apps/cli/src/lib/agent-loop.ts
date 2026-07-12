@@ -435,7 +435,7 @@ export async function runAgentLoop(
     } else {
       consecutiveToolOnlyRounds = 0
     }
-    if (consecutiveToolOnlyRounds >= 3) {
+    if (consecutiveToolOnlyRounds >= 8) {
       messages = insertFallback(
         messages,
         '⚠️ 多次工具调用均未返回有效内容，无法获取实时信息。以下是基于已有知识的回答：\n\n' +

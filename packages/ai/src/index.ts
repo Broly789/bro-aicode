@@ -5,7 +5,7 @@ export {
 
 export { getSystemInstructions } from './instructions'
 
-export { WORKSPACE_ROOT, GuardrailError, resolveSafePath } from './workspace'
+export { getWorkspaceRoot, GuardrailError, resolveSafePath } from './workspace'
 
 export { logger } from './lib/logger'
 

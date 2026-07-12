@@ -39,8 +39,6 @@ export type ToolResult =
   | { ok: true; output: unknown }
   | { ok: false; error: string }
 
-const projectRoot = process.env.PROJECT_ROOT || process.cwd()
-
 export type ToolCallPart = {
   type: `tool-${string}` | 'dynamic-tool'
   toolCallId: string
@@ -54,8 +52,9 @@ export async function executeTool(
 ): Promise<ToolResult> {
   const runner = toolRunners[part.toolName]
   if (!runner) return { ok: false, error: `Unknown tool: ${part.toolName}` }
+  const cwd = process.env.PROJECT_ROOT || process.cwd()
   try {
-    const output = await runner(part.input, projectRoot)
+    const output = await runner(part.input, cwd)
     console.log(`[tool] ${part.toolName} completed, output type: ${JSON.stringify(output, null, 2)}`)
     return { ok: true, output }
   } catch (err) {

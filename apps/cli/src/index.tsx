@@ -1,8 +1,58 @@
+#!/usr/bin/env bun
+
+import { existsSync } from 'fs'
+import { join, dirname } from 'path'
 import { createCliRenderer, ConsolePosition } from '@opentui/core'
 import { createRoot } from '@opentui/react'
 import { App } from './App'
 import { getTopLayerId } from './lib/layers'
 import { toast } from './components/toast'
+
+// ── Bootstrap: detect workspace root ─────────────────────────────
+
+const START_CWD = process.cwd()
+
+function findProjectRoot(start: string): string {
+  if (existsSync(join(start, '.git'))) return start
+  if (existsSync(join(start, 'package.json'))) return start
+  let dir = start
+  for (let i = 0; i < 5; i++) {
+    if (existsSync(join(dir, '.git'))) return dir
+    if (existsSync(join(dir, 'brocode.json'))) return dir
+    const parent = dirname(dir)
+    if (parent === dir) break
+    dir = parent
+  }
+  return start
+}
+
+const projectRoot = process.env.PROJECT_ROOT || findProjectRoot(START_CWD)
+process.env.PROJECT_ROOT = projectRoot
+console.log(`[brocode] PROJECT_ROOT=${projectRoot} CWD=${START_CWD} SERVER_URL=${process.env.SERVER_URL ?? 'http://localhost:3000'}`)
+
+const envPath = join(projectRoot, '.env.local')
+if (existsSync(envPath)) {
+  const text = await Bun.file(envPath).text()
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eqIdx = trimmed.indexOf('=')
+    if (eqIdx === -1) continue
+    const key = trimmed.slice(0, eqIdx).trim()
+    const val = trimmed.slice(eqIdx + 1).trim()
+    if (!(key in process.env)) {
+      process.env[key] = val
+    }
+  }
+}
+
+// Server health check (non-blocking warning)
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000'
+fetch(`${SERVER_URL}/health`)
+  .then((r) => {
+    if (!r.ok) console.warn(`[brocode] Server at ${SERVER_URL} returned ${r.status}`)
+  })
+  .catch(() => console.warn(`[brocode] Server not reachable at ${SERVER_URL}. Start server with: bun run dev:server`))
 
 /**
  * OpenTUI's `console.getCachedLogs()` reads an internal cache that is
