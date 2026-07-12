@@ -113,7 +113,7 @@ bun run dev
 |------|----------|----------|------|
 | **Tavily** | 英文/国际内容 | 1000 次/月 | `TAVILY_API_KEY` |
 | **百度千帆** | 中文内容 | 1500 次/月 | `BAIDU_API_KEY` |
-| 爬虫 (bing/baidu/ddg) | API 不可用时自动降级 | 无限制 | 无需配置 |
+| 爬虫 (Bing) | API 不可用时自动降级 | 无限制 | 无需配置 |
 
 搜索自动路由：中文 → 百度优先，英文 → Tavily 优先。
 通过 `SEARCH_PRIORITY=tavily` 或 `SEARCH_PRIORITY=baidu` 强制指定。
@@ -127,7 +127,7 @@ export SEARCH_URL_BAIDU="https://your-proxy/baidu/search"
 
 不配则使用代码内置的默认地址。
 
-> 爬虫兜底（Bing/Sogou）仅在 API 全部不可用时自动降级，URL 不可自定义。
+> 爬虫兜底（Bing）仅在 API 全部不可用时自动降级。
 
 ## Commands
 

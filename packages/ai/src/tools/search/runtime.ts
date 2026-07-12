@@ -189,70 +189,19 @@ function isBlocked(html: string): boolean {
   return BLOCK_KEYWORDS.some((k) => html.toLowerCase().includes(k.toLowerCase()))
 }
 
-function extractSearchResults(html: string, engine: string): string {
+function extractBingResults(html: string): string {
   const results: string[] = []
-
-  if (engine === 'baidu') {
-    const re = /<div[^>]*class="[^"]*result[^"]*"[^>]*>[\s\S]*?<h3[^>]*>[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h3>([\s\S]*?)<\/div>/gi
-    let m
-    while ((m = re.exec(html)) !== null) {
-      const title = m[2].replace(/<[^>]+>/g, '').trim()
-      const snippet = m[3].replace(/<[^>]+>/g, '').trim()
-      if (title) results.push(`${title}\n${snippet}`)
-    }
-  } else if (engine === 'bing') {
-    const re = /<li[^>]*class="[^"]*b_algo[^"]*"[^>]*>[\s\S]*?<h2[^>]*>[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h2>([\s\S]*?)<\/li>/gi
-    let m
-    while ((m = re.exec(html)) !== null) {
-      const title = m[2].replace(/<[^>]+>/g, '').trim()
-      const snippet = m[3].replace(/<[^>]+>/g, '').trim()
-      if (title) results.push(`${title}\n${snippet}`)
-    }
-  } else if (engine === 'duckduckgo') {
-    const re = /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/gi
-    let m
-    while ((m = re.exec(html)) !== null) {
-      const title = m[2].replace(/<[^>]+>/g, '').trim()
-      const snippet = m[3].replace(/<[^>]+>/g, '').trim()
-      if (title) results.push(`${title}\n${snippet}`)
-    }
+  const re = /<li[^>]*class="[^"]*b_algo[^"]*"[^>]*>[\s\S]*?<h2[^>]*>[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<\/h2>([\s\S]*?)<\/li>/gi
+  let m
+  while ((m = re.exec(html)) !== null) {
+    const title = m[2].replace(/<[^>]+>/g, '').trim()
+    const snippet = m[3].replace(/<[^>]+>/g, '').trim()
+    if (title) results.push(`${title}\n${snippet}`)
   }
-
   if (results.length > 0) {
     return results.slice(0, 10).join('\n\n---\n\n')
   }
-
-  return fallbackHtmlToText(html)
-}
-
-function fallbackHtmlToText(html: string): string {
-  let s = html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-    .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
-    .replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#x2F;/g, '/')
-    .replace(/&#(\d+);/g, (_, c) => String.fromCharCode(Number(c)))
-    .replace(/[ \t]+/g, ' ')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 1)
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
-
-  const maxLen = 15000
-  if (s.length > maxLen) {
-    s = s.slice(0, maxLen) + '\n\n... [content truncated]'
-  }
-  return s
+  return ''
 }
 
 async function fetchWithTimeout(url: string, ms = 12000): Promise<string> {
@@ -298,7 +247,7 @@ async function tryFetch(url: string, label: string, retries = 2): Promise<string
         }
         return null
       }
-      return extractSearchResults(html, label)
+      return extractBingResults(html)
     } catch (err) {
       log(`[scraper/${label}] ${err instanceof Error ? err.message : String(err)} (attempt ${i + 1})`)
       if (i < retries) {
@@ -315,19 +264,11 @@ async function tryFetch(url: string, label: string, retries = 2): Promise<string
  */
 async function searchScraper(query: string): Promise<{ source: string; url: string; content: string } | null> {
   const q = encodeURIComponent(query)
-
-  const engines: [string, string][] = [
-    ['bing', 'https://www.bing.com/search?q={q}&cc=cn'.replace('{q}', q)],
-    ['sogou', 'https://www.sogou.com/web?query={q}'.replace('{q}', q)],
-  ]
-
-  for (const [label, url] of engines) {
-    const text = await tryFetch(url, label)
-    if (text && text.length > 150) {
-      return { source: label, url, content: text }
-    }
+  const url = 'https://www.bing.com/search?q={q}&cc=cn'.replace('{q}', q)
+  const text = await tryFetch(url, 'bing')
+  if (text && text.length > 150) {
+    return { source: 'bing', url, content: text }
   }
-
   return null
 }
 
